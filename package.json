@@ -17,9 +17,11 @@
     "@nangohq/frontend": "^0.29.7",
     "@nangohq/node": "^0.29.7",
     "axios": "^1.5.0",
+    "better-sqlite3": "^9.0.0",
     "concurrently": "^8.2.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "mysql2": "^3.6.3",
     "nodemon": "^3.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
