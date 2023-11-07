@@ -44,7 +44,31 @@ export default function DaybookExcelShow() {
       invoices.filter((invoice) => selectedSheets.includes(invoice.sheet))
     );
   }, [selectedSheets]);
-
+  function AddClient(client) {
+    axios.post("/api/clients", { name: client });
+    //refresh invoice list
+    axios
+      .get("/api/daybook/invoices")
+      .then((response) => {
+        setInvoices(response.data);
+        setSheets([...new Set(response.data.map((item) => item.sheet))]);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+  function RemoveClient(clientId) {
+    axios.delete("/api/daybook/link/" + clientId);
+    axios
+      .get("/api/daybook/invoices")
+      .then((response) => {
+        setInvoices(response.data);
+        setSheets([...new Set(response.data.map((item) => item.sheet))]);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
   return (
     <>
       <div className="min-h-full">
@@ -157,7 +181,20 @@ export default function DaybookExcelShow() {
                               {invoice.number}
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {invoice.client}
+                              {invoice.client}{" "}
+                              {invoice.clientId == null ? (
+                                <button
+                                  onClick={() => AddClient(invoice.client)}
+                                >
+                                  Add
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => RemoveClient(invoice.id)}
+                                >
+                                  Remove Link
+                                </button>
+                              )}
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                               {pounds.format(invoice.Fees)}

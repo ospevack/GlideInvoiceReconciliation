@@ -36,6 +36,43 @@ app.get("/daybook/invoices", (req, res) => {
   });
 });
 
+app.get("/clients", (req, res) => {
+  connection.query("SELECT * FROM clients", function (err, results, fields) {
+    if (err) throw err;
+    res.send(results);
+  });
+});
+app.post("/clients", (req, res) => {
+  connection.query(
+    "INSERT INTO clients (name) VALUES (?)",
+    [req.body.name],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+app.delete("/daybook/link/:id", (req, res) => {
+  connection.query(
+    "UPDATE daybook t set t.clientId = NULL WHERE t.id = ?",
+    [req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+app.post("/daybook/link/:id", (req, res) => {
+  connection.query(
+    "UPDATE daybook t set t.clientId = ? WHERE t.id = ?",
+    [req.body.clientId, req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.get("/xero/sales/invoices", async (req, res, next) => {
   try {
     const result = await nango
