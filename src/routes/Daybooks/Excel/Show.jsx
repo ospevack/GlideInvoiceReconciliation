@@ -23,6 +23,7 @@ export default function DaybookExcelShow() {
   const [invoices, setInvoices] = useState([]);
   const [sheets, setSheets] = useState([]);
   const [selectedSheets, setSelectedSheets] = useState([]);
+  const [filteredInvoices, setFilteredInvoices] = useState([]);
 
   useEffect(() => {
     axios
@@ -38,6 +39,11 @@ export default function DaybookExcelShow() {
         console.log(error);
       });
   }, []);
+  useEffect(() => {
+    setFilteredInvoices(
+      invoices.filter((invoice) => selectedSheets.includes(invoice.sheet))
+    );
+  }, [selectedSheets]);
 
   return (
     <>
@@ -73,10 +79,20 @@ export default function DaybookExcelShow() {
                       )}
                       <div className="flex flex-col items-center">
                         <div>
-                          <a href="#">clear all</a>
+                          <button onClick={() => setSelectedSheets([])}>
+                            clear all
+                          </button>
                         </div>
                         <div>
-                          <a href="#">select all</a>
+                          <button
+                            onClick={() =>
+                              setSelectedSheets([
+                                ...new Set(invoices.map((item) => item.sheet)),
+                              ])
+                            }
+                          >
+                            select all
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -130,35 +146,33 @@ export default function DaybookExcelShow() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        {invoices.map((invoice) => {
-                          selectedSheets.includes(invoice.sheet) ? (
-                            <tr key={invoice.id}>
-                              <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                                {new Date(invoice.date).toLocaleDateString(
-                                  "en-GB"
-                                )}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {invoice.number}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {invoice.client}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {pounds.format(invoice.Fees)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {pounds.format(invoice.Disb ?? 0)}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                {pounds.format(
-                                  parseFloat(invoice.Fees) +
-                                    parseFloat(invoice.Disb ?? 0.0)
-                                )}
-                              </td>
-                            </tr>
-                          ) : null;
-                        })}
+                        {filteredInvoices.map((invoice) => (
+                          <tr key={invoice.id}>
+                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
+                              {new Date(invoice.date).toLocaleDateString(
+                                "en-GB"
+                              )}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {invoice.number}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {invoice.client}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {pounds.format(invoice.Fees)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {pounds.format(invoice.Disb ?? 0)}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {pounds.format(
+                                parseFloat(invoice.Fees) +
+                                  parseFloat(invoice.Disb ?? 0.0)
+                              )}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
