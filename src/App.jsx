@@ -3,6 +3,7 @@ import Dashboard from "./routes/dashboard/Dashboard.jsx";
 import Test from "./routes/test/Test.jsx";
 import ExcelMatch from "./routes/Sales/Excel/Match.jsx";
 import DaybookExcelShow from "./routes/Daybooks/Excel/Show.jsx";
+import ClientList from "./routes/Clients/list.jsx";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/Test" element={<Test />} />
         <Route path="/Sales/ExcelMatch" element={<ExcelMatch />} />
         <Route path="/Daybooks/Excel" element={<DaybookExcelShow />} />
+        <Route path="/Clients" element={<ClientList />} />
       </Routes>
     </BrowserRouter>
   );

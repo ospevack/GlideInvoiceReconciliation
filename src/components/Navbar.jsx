@@ -5,7 +5,21 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Navbar({ navigation }) {
+export default function Navbar({ PageName }) {
+  const navigation = [
+    { name: "Dashboard", href: "/", current: PageName === "Dashboard" },
+    {
+      name: "Sales Rec (Excel/Xero)",
+      href: "/Sales/ExcelMatch",
+      current: PageName === "SalesRec",
+    },
+    {
+      name: "Daybooks",
+      href: "/Daybooks/Excel",
+      current: PageName === "Daybooks",
+    },
+    { name: "Clients", href: "/Clients/list", current: PageName === "Clients" },
+  ];
   return (
     <Disclosure as="nav" className="border-b border-gray-200 bg-white">
       {({ open }) => (

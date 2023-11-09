@@ -5,13 +5,6 @@ import CompListBox from "./Component-List";
 import CompListClient from "./Component-ClientList";
 import Fuse from "fuse.js";
 
-const navigation = [
-  { name: "Dashboard", href: "/", current: false },
-  { name: "Sales Rec (Excel/Xero)", href: "/Sales/ExcelMatch", current: false },
-  { name: "Daybooks", href: "/Daybooks/Excel", current: true },
-  { name: "Clients", href: "/Clients/list", current: false },
-];
-
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
@@ -123,7 +116,7 @@ export default function DaybookExcelShow() {
   return (
     <>
       <div className="min-h-full">
-        <Navbar navigation={navigation} />
+        <Navbar PageName="Daybooks" />
 
         <div className="py-10">
           <header>

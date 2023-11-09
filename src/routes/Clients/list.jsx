@@ -1,4 +1,4 @@
-import Navbar from "../../../components/navbar";
+import Navbar from "../../components/navbar";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
@@ -35,7 +35,7 @@ export default function ClientList() {
   return (
     <>
       <div className="min-h-full">
-        <Navbar navigation={navigation} />
+        <Navbar PageName="Clients" />
 
         <div className="py-10">
           <header>

@@ -1,12 +1,5 @@
 import Navbar from "../../../components/navbar";
 
-const navigation = [
-  { name: "Dashboard", href: "/", current: false },
-  { name: "Sales Rec (Excel/Xero)", href: "/Sales/ExcelMatch", current: true },
-  { name: "Projects", href: "#", current: false },
-  { name: "Calendar", href: "#", current: false },
-];
-
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
@@ -15,7 +8,7 @@ export default function ExcelMatch() {
   return (
     <>
       <div className="min-h-full">
-        <Navbar navigation={navigation} />
+        <Navbar PageName="Daybooks" />
 
         <div className="py-10">
           <header>
