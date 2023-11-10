@@ -1,9 +1,12 @@
 import Navbar from "../../../components/navbar";
 import CompListBox from "./Component-List";
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import axios from "axios";
 import MatchRow from "./MatchRow";
 import Fuse from "fuse.js";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import CompMatch from "./Component-Matched";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -13,6 +16,7 @@ export default function ExcelMatch() {
   const [invoices, setInvoices] = useState([]);
   const [sheets, setSheets] = useState([]);
   const [selectedSheets, setSelectedSheets] = useState([]);
+  const [selectedMatch, setSelectedMatch] = useState("All");
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [xeroInvoices, setXeroInvoices] = useState([]);
   const [clientList, setClientList] = useState([]);
@@ -47,12 +51,40 @@ export default function ExcelMatch() {
       });
   }, []);
   useEffect(() => {
-    setFilteredInvoices(
-      invoices.filter((invoice) => selectedSheets.includes(invoice.sheet))
-    );
-  }, [selectedSheets]);
+    filterInvoices();
+  }, [selectedSheets, selectedMatch, invoices]);
 
-  function fuseFuzzyName(nam, invoice) {
+  function filterInvoices() {
+    setFilteredInvoices(
+      invoices.filter(
+        (invoice) =>
+          selectedSheets.includes(invoice.sheet) && checkMatched(invoice)
+      )
+    );
+  }
+
+  function checkMatched(invoice) {
+    if (invoice.xeroClientId != null && selectedMatch == "Matched") {
+      return true;
+    } else if (selectedMatch == "All") {
+      return true;
+    } else if (invoice.xeroClientId == null && selectedMatch == "Unmatched") {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function fuseFuzzyName(invoice) {
+    //Check to see if theres a match already
+    if (invoice.xeroClientId != null) {
+      return {
+        score: 100,
+        item: xeroInvoices.filter(
+          (xeroInvoice) => xeroInvoice.Contact.ContactID == invoice.xeroClientId
+        )[0],
+      };
+    }
     const options = {
       includeScore: true,
       keys: [
@@ -62,10 +94,41 @@ export default function ExcelMatch() {
     };
     const fuse = new Fuse(xeroInvoices, options);
     const result = fuse.search(
-      { $and: [{ name: nam }, { inv: invoice }] },
+      { $and: [{ name: invoice.client }, { inv: invoice.number }] },
       { limit: 5 }
     );
     return result[0];
+  }
+  function refreshDaybook() {
+    axios
+      .get("/api/daybook/invoices")
+      .then((response) => {
+        setInvoices(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  function matchInvoice(Daybook, Xero, Switch) {
+    if (Switch == "link") {
+      axios
+        .post("/api/daybook/invoices/link", {
+          Daybook: Daybook,
+          Xero: Xero.item,
+        })
+        .then((response) => {
+          console.log(response);
+          //refreshDaybook();
+        });
+    } else if (Switch == "unlink") {
+      axios
+        .delete("/api/daybook/invoices/link/" + Daybook.id)
+        .then((response) => {
+          console.log(response);
+          refreshDaybook();
+        });
+    }
   }
 
   return (
@@ -84,7 +147,7 @@ export default function ExcelMatch() {
           <main>
             <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
               <div className="border-2 border-indigo-600 rounded-md my-4 p-4">
-                <div className="flex flex-wrap items-center">
+                <div className="flex flex-wrap items-start">
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters
                   </span>
@@ -117,6 +180,14 @@ export default function ExcelMatch() {
                           select all
                         </button>
                       </span>
+                    </span>
+                  </span>
+                  <span className=" px-2">
+                    <span>
+                      <CompMatch
+                        selectedMatch={selectedMatch}
+                        setSelectedMatch={setSelectedMatch}
+                      />
                     </span>
                   </span>
                 </div>
@@ -172,10 +243,8 @@ export default function ExcelMatch() {
                   ? filteredInvoices.map((invoice) => (
                       <MatchRow
                         DaybookInvoice={invoice}
-                        XeroInvoice={fuseFuzzyName(
-                          invoice.client,
-                          invoice.number
-                        )}
+                        XeroInvoice={fuseFuzzyName(invoice)}
+                        matchInvoice={matchInvoice}
                       />
                     ))
                   : null}

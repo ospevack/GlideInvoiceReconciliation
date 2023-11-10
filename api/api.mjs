@@ -52,9 +52,9 @@ app.post("/clients", (req, res) => {
     }
   );
 });
-app.delete("/daybook/link/:id", (req, res) => {
+app.delete("/daybook/invoices/link/:id", (req, res) => {
   connection.query(
-    "UPDATE daybook t set t.clientId = NULL WHERE t.id = ?",
+    "UPDATE daybook t set t.xeroClientId = NULL, t.xeroInvoiceId = NULL WHERE t.id = ?",
     [req.params.id],
     function (err, results, fields) {
       if (err) throw err;
@@ -62,10 +62,14 @@ app.delete("/daybook/link/:id", (req, res) => {
     }
   );
 });
-app.post("/daybook/link/:id", (req, res) => {
+app.post("/daybook/invoices/link", (req, res) => {
   connection.query(
-    "UPDATE daybook t set t.clientId = ? WHERE t.id = ?",
-    [req.body.clientId, req.params.id],
+    "UPDATE daybook t set t.xeroClientId = ?, t.xeroInvoiceId = ? WHERE t.id = ?",
+    [
+      req.body.Xero.Contact.ContactID,
+      req.body.Xero.InvoiceID,
+      req.body.Daybook.id,
+    ],
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);
