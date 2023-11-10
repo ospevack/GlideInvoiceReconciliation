@@ -13,16 +13,16 @@ export default function MatchRow({
             </span>
           </div>
           <div className="grow w-full">
-            <div className="flex items-center divide-x divide-slate-400 divide-dashed">
+            <div className="flex items-start divide-x divide-slate-400 divide-dashed">
               <div className="w-1/2">
                 <div className="text-sm">Invoice Number</div>
-                <div className="text-sm">{DaybookInvoice?.invoiceNumber}</div>
+                <div className="text-sm">{DaybookInvoice?.number}</div>
                 <div className="text-sm">Invoice Date</div>
-                <div className="text-sm">{DaybookInvoice?.invoiceDate}</div>
+                <div className="text-sm">{DaybookInvoice?.date}</div>
               </div>
               <div className="w-1/2">
                 <div className="text-sm">Invoice Total</div>
-                <div className="text-sm">{DaybookInvoice?.invoiceTotal}</div>
+                <div className="text-sm">{DaybookInvoice?.Fees}</div>
               </div>
             </div>
           </div>
@@ -38,8 +38,26 @@ export default function MatchRow({
       </div>
       <div className="basis-5/12 bg-indigo-100 p-2 border border-black rounded">
         <div className="flex flex-col items-center">
-          <div className="grow w-full bg-blue-200">This is the Title</div>
-          <div className="grow w-full bg-green-100">This is content</div>
+          <div className="grow w-full border-b border-slate-400">
+            <span className="text-base font-semibold">
+              {XeroInvoice?.item.Contact.Name} (
+              {parseFloat(+XeroInvoice?.score).toFixed(2)})
+            </span>
+          </div>
+          <div className="grow w-full">
+            <div className="flex items-start divide-x divide-slate-400 divide-dashed">
+              <div className="w-1/2">
+                <div className="text-sm">Invoice Number</div>
+                <div className="text-sm">{XeroInvoice?.item.InvoiceNumber}</div>
+                <div className="text-sm">Invoice Date</div>
+                <div className="text-sm">{XeroInvoice?.item.DateString}</div>
+              </div>
+              <div className="w-1/2">
+                <div className="text-sm">Invoice Total</div>
+                <div className="text-sm">{XeroInvoice?.item.SubTotal}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

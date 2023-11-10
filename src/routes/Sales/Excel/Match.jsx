@@ -3,6 +3,7 @@ import CompListBox from "./Component-List";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import MatchRow from "./MatchRow";
+import Fuse from "fuse.js";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -14,6 +15,7 @@ export default function ExcelMatch() {
   const [selectedSheets, setSelectedSheets] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [xeroInvoices, setXeroInvoices] = useState([]);
+  const [clientList, setClientList] = useState([]);
 
   useEffect(() => {
     axios
@@ -49,6 +51,22 @@ export default function ExcelMatch() {
       invoices.filter((invoice) => selectedSheets.includes(invoice.sheet))
     );
   }, [selectedSheets]);
+
+  function fuseFuzzyName(nam, invoice) {
+    const options = {
+      includeScore: true,
+      keys: [
+        { name: "name", getFn: (x) => x.Contact.Name },
+        { name: "inv", getFn: (x) => x.InvoiceNumber },
+      ],
+    };
+    const fuse = new Fuse(xeroInvoices, options);
+    const result = fuse.search(
+      { $and: [{ name: nam }, { inv: invoice }] },
+      { limit: 5 }
+    );
+    return result[0];
+  }
 
   return (
     <>
@@ -150,8 +168,17 @@ export default function ExcelMatch() {
                 </div>
               </div>
               <div className="divide-y divide-gray-200">
-                <MatchRow />
-                <MatchRow />
+                {filteredInvoices.length > 0
+                  ? filteredInvoices.map((invoice) => (
+                      <MatchRow
+                        DaybookInvoice={invoice}
+                        XeroInvoice={fuseFuzzyName(
+                          invoice.client,
+                          invoice.number
+                        )}
+                      />
+                    ))
+                  : null}
               </div>
             </div>
           </main>
