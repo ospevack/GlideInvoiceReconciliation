@@ -37,7 +37,7 @@ export default function MatchRow({
         <div className="flex flex-col items-center">
           <div className="grow w-full border-b border-slate-400">
             <span className="text-base font-semibold">
-              {DaybookInvoice?.client}
+              ({DaybookInvoice?.id}) {DaybookInvoice?.client}
             </span>
           </div>
           <div className="grow w-full">
@@ -61,7 +61,8 @@ export default function MatchRow({
         </div>
       </div>
       <div className="basis-2/12 w-64 p-4 text-center">
-        {DaybookInvoice?.xeroInvoiceId != null ? (
+        {DaybookInvoice?.xeroInvoiceId != null ||
+        DaybookInvoice?.xeroCreditNoteId != null ? (
           <button
             type="button"
             className="rounded-md bg-green-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
@@ -69,7 +70,7 @@ export default function MatchRow({
           >
             Un-Match
           </button>
-        ) : (
+        ) : XeroInvoice == null ? null : (
           <button
             type="button"
             className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
@@ -88,7 +89,7 @@ export default function MatchRow({
         <div className="flex flex-col items-center">
           <div className="grow w-full border-b border-slate-400">
             <span className="text-base font-semibold">
-              {XeroInvoice?.item.Contact.Name} ({XeroInvoice?.score})
+              {XeroInvoice?.item.Contact.Name} ({XeroInvoice?.item.Status})
             </span>
           </div>
           <div className="grow w-full">
@@ -96,15 +97,32 @@ export default function MatchRow({
               <div className="w-1/2">
                 <div className="text-sm">Invoice Number</div>
                 <div className="text-sm content-center">
-                  <span>{XeroInvoice?.item.InvoiceNumber}</span>
-                  {XeroInvoice?.item.InvoiceNumber ==
-                    DaybookInvoice?.number && (
-                    <span className="inline-block">
-                      <CheckCircleIcon
-                        className="h-5 w-5 text-green-400"
-                        aria-hidden="true"
-                      />
-                    </span>
+                  {XeroInvoice?.item.Type == "ACCRECCREDIT" ? (
+                    <>
+                      <span>{XeroInvoice?.item.CreditNoteNumber}</span>
+                      {XeroInvoice?.item.CreditNoteNumber ==
+                        DaybookInvoice?.number && (
+                        <span className="inline-block">
+                          <CheckCircleIcon
+                            className="h-5 w-5 text-green-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span>{XeroInvoice?.item.InvoiceNumber}</span>
+                      {XeroInvoice?.item.InvoiceNumber ==
+                        DaybookInvoice?.number && (
+                        <span className="inline-block">
+                          <CheckCircleIcon
+                            className="h-5 w-5 text-green-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="text-sm">Invoice Date</div>

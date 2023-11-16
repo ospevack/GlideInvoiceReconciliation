@@ -99,6 +99,28 @@ app.get("/xero/sales/invoices", async (req, res, next) => {
   }
 });
 
+app.get("/xero/sales/CreditNotes", async (req, res, next) => {
+  try {
+    const result = await nango
+      .get({
+        endpoint: "/CreditNotes",
+        baseUrlOverride: "https://api.xero.com/api.xro/2.0",
+        providerConfigKey: "xero",
+        connectionId: "GlideInvoiceReconciliation",
+        headers: {
+          Accept: "application/json",
+          "Xero-tenant-id": "1ae3a830-4b8b-4ac2-8e9c-32e598384375",
+        },
+        params: req.query,
+      })
+      .then((response) => {
+        res.send(response.data);
+      });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.listen(5678, () => {
   console.log("Server started!");
 });

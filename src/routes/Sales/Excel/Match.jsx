@@ -19,6 +19,7 @@ export default function ExcelMatch() {
   const [selectedMatch, setSelectedMatch] = useState("All");
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [xeroInvoices, setXeroInvoices] = useState([]);
+  const [xeroCreditNotes, setXeroCreditNotes] = useState([]);
   const [clientList, setClientList] = useState([]);
 
   useEffect(() => {
@@ -47,7 +48,24 @@ export default function ExcelMatch() {
         params: { where: 'Type=="ACCREC"' },
       })
       .then((response) => {
-        setXeroInvoices(response.data.Invoices);
+        setXeroInvoices(
+          response.data.Invoices.filter(
+            (item) => item.Status == "PAID" || item.Status == "AUTHORISED"
+          )
+          //response.data.Invoices
+        );
+      });
+    axios
+      .get("/api/xero/sales/CreditNotes", {
+        params: { where: 'Type=="ACCRECCREDIT"' },
+      })
+      .then((response) => {
+        setXeroCreditNotes(
+          response.data.CreditNotes.filter(
+            (item) => item.Status == "PAID" || item.Status == "AUTHORISED"
+          )
+          //response.data.Invoices
+        );
       });
   }, []);
   useEffect(() => {
@@ -76,28 +94,65 @@ export default function ExcelMatch() {
   }
 
   function fuseFuzzyName(invoice) {
+    //check to see if its a credit note
+    if (invoice.type == "Credit") {
+      //Match already?
+      if (invoice.xeroCreditNoteId != null) {
+        return {
+          score: 100,
+          item: xeroCreditNotes.filter(
+            (xeroCreditNote) =>
+              xeroCreditNote.CreditNoteID == invoice.xeroCreditNoteId
+          )[0],
+        };
+      }
+
+      //do credit note number matching first
+      var creditNoteNoMatch = xeroCreditNotes.filter((inv) => {
+        return inv.CreditNoteNumber == invoice.number;
+      });
+      if (creditNoteNoMatch.length > 0) {
+        return {
+          score: 100,
+          item: creditNoteNoMatch[0],
+        };
+      }
+    }
     //Check to see if theres a match already
-    if (invoice.xeroClientId != null) {
+    if (invoice.xeroInvoiceId != null) {
       return {
         score: 100,
         item: xeroInvoices.filter(
-          (xeroInvoice) => xeroInvoice.Contact.ContactID == invoice.xeroClientId
+          (xeroInvoice) => xeroInvoice.InvoiceID == invoice.xeroInvoiceId
         )[0],
       };
     }
-    const options = {
-      includeScore: true,
-      keys: [
-        { name: "name", getFn: (x) => x.Contact.Name },
-        { name: "inv", getFn: (x) => x.InvoiceNumber },
-      ],
-    };
-    const fuse = new Fuse(xeroInvoices, options);
-    const result = fuse.search(
-      { $and: [{ name: invoice.client }, { inv: invoice.number }] },
-      { limit: 5 }
-    );
-    return result[0];
+
+    //do invoice number matching first
+    var invoiceNoMatch = xeroInvoices.filter((inv) => {
+      return inv.InvoiceNumber == invoice.number;
+    });
+    //console.log(invoiceNoMatch);
+    if (invoiceNoMatch.length > 0) {
+      return {
+        score: 100,
+        item: invoiceNoMatch[0],
+      };
+    }
+
+    // const options = {
+    //   includeScore: true,
+    //   keys: [
+    //     { name: "name", getFn: (x) => x.Contact.Name },
+    //     { name: "inv", getFn: (x) => x.InvoiceNumber },
+    //   ],
+    // };
+    // const fuse = new Fuse(xeroInvoices, options);
+    // const result = fuse.search(
+    //   { $and: [{ name: invoice.client }, { inv: invoice.number }] },
+    //   { limit: 5 }
+    // );
+    // return result[0];
   }
   function refreshDaybook() {
     axios
@@ -118,8 +173,23 @@ export default function ExcelMatch() {
           Xero: Xero.item,
         })
         .then((response) => {
-          console.log(response);
-          //refreshDaybook();
+          //console.log(response);
+          if (
+            response.data.affectedRows == 1 &&
+            response.data.changedRows == 1
+          ) {
+            var newInvoices = invoices.map((invoice) => {
+              if (invoice.id == Daybook.id) {
+                return {
+                  ...invoice,
+                  xeroInvoiceId: Xero.item.InvoiceID,
+                  xeroClientId: Xero.item.Contact.ContactID,
+                };
+              }
+              return invoice;
+            });
+            setInvoices(newInvoices);
+          }
         });
     } else if (Switch == "unlink") {
       axios
@@ -129,6 +199,9 @@ export default function ExcelMatch() {
           refreshDaybook();
         });
     }
+  }
+  function removeSelected(sheet) {
+    setSelectedSheets(selectedSheets.filter((item) => item !== sheet));
   }
 
   return (
