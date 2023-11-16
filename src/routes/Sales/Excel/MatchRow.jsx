@@ -80,90 +80,105 @@ export default function MatchRow({
           </button>
         )}
       </div>
-      <div
-        className={classNames(
-          "basis-5/12 p-2 border border-black rounded",
-          MatchGrade(DaybookInvoice, XeroInvoice)
-        )}
-      >
-        <div className="flex flex-col items-center">
-          <div className="grow w-full border-b border-slate-400">
-            <span className="text-base font-semibold">
-              {XeroInvoice?.item.Contact.Name} ({XeroInvoice?.item.Status})
-            </span>
-          </div>
-          <div className="grow w-full">
-            <div className="flex items-start divide-x divide-slate-400 divide-dashed">
-              <div className="w-1/2">
-                <div className="text-sm">Invoice Number</div>
-                <div className="text-sm content-center">
-                  {XeroInvoice?.item.Type == "ACCRECCREDIT" ? (
-                    <>
-                      <span>{XeroInvoice?.item.CreditNoteNumber}</span>
-                      {XeroInvoice?.item.CreditNoteNumber ==
-                        DaybookInvoice?.number && (
-                        <span className="inline-block">
-                          <CheckCircleIcon
-                            className="h-5 w-5 text-green-400"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <span>{XeroInvoice?.item.InvoiceNumber}</span>
-                      {XeroInvoice?.item.InvoiceNumber ==
-                        DaybookInvoice?.number && (
-                        <span className="inline-block">
-                          <CheckCircleIcon
-                            className="h-5 w-5 text-green-400"
-                            aria-hidden="true"
-                          />
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="text-sm">Invoice Date</div>
-                <div className="text-sm">
-                  {new Date(XeroInvoice?.item.DateString).toLocaleDateString(
-                    "en-GB"
-                  )}
-                  {new Date(XeroInvoice?.item.DateString).toLocaleDateString(
-                    "en-GB"
-                  ) ==
-                    new Date(DaybookInvoice?.date).toLocaleDateString(
+      {DaybookInvoice?.cancelled == 0 ? (
+        <div
+          className={classNames(
+            "basis-5/12 p-2 border border-black rounded",
+            MatchGrade(DaybookInvoice, XeroInvoice)
+          )}
+        >
+          <div className="flex flex-col items-center">
+            <div className="grow w-full border-b border-slate-400">
+              <span className="text-base font-semibold">
+                {XeroInvoice?.item.Contact.Name} ({XeroInvoice?.item.Status})
+              </span>
+            </div>
+            <div className="grow w-full">
+              <div className="flex items-start divide-x divide-slate-400 divide-dashed">
+                <div className="w-1/2">
+                  <div className="text-sm">Invoice Number</div>
+                  <div className="text-sm content-center">
+                    {XeroInvoice?.item.Type == "ACCRECCREDIT" ? (
+                      <>
+                        <span>{XeroInvoice?.item.CreditNoteNumber}</span>
+                        {XeroInvoice?.item.CreditNoteNumber ==
+                          DaybookInvoice?.number && (
+                          <span className="inline-block">
+                            <CheckCircleIcon
+                              className="h-5 w-5 text-green-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <span>{XeroInvoice?.item.InvoiceNumber}</span>
+                        {XeroInvoice?.item.InvoiceNumber ==
+                          DaybookInvoice?.number && (
+                          <span className="inline-block">
+                            <CheckCircleIcon
+                              className="h-5 w-5 text-green-400"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <div className="text-sm">Invoice Date</div>
+                  <div className="text-sm">
+                    {new Date(XeroInvoice?.item.DateString).toLocaleDateString(
                       "en-GB"
-                    ) && (
-                    <span className="inline-block">
-                      <CheckCircleIcon
-                        className="h-5 w-5 text-green-400"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  )}
+                    )}
+                    {new Date(XeroInvoice?.item.DateString).toLocaleDateString(
+                      "en-GB"
+                    ) ==
+                      new Date(DaybookInvoice?.date).toLocaleDateString(
+                        "en-GB"
+                      ) && (
+                      <span className="inline-block">
+                        <CheckCircleIcon
+                          className="h-5 w-5 text-green-400"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="w-1/2">
-                <div className="text-sm">Invoice Total</div>
-                <div className="text-sm">
-                  {XeroInvoice?.item.SubTotal}
-                  {XeroInvoice?.item.SubTotal ==
-                    +DaybookInvoice?.Fees + +DaybookInvoice?.disb && (
-                    <span className="inline-block">
-                      <CheckCircleIcon
-                        className="h-5 w-5 text-green-400"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  )}
+                <div className="w-1/2">
+                  <div className="text-sm">Invoice Total</div>
+                  <div className="text-sm">
+                    {XeroInvoice?.item.SubTotal}
+                    {XeroInvoice?.item.SubTotal ==
+                      +DaybookInvoice?.Fees + +DaybookInvoice?.disb && (
+                      <span className="inline-block">
+                        <CheckCircleIcon
+                          className="h-5 w-5 text-green-400"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className={classNames(
+            "basis-5/12 p-2 border border-black rounded",
+            "bg-grey-300"
+          )}
+        >
+          <div className="flex flex-col items-center">
+            <div className="grow w-full  text-center">
+              <span className="text-l font-semibold">CANCELLED</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

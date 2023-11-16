@@ -82,11 +82,18 @@ export default function ExcelMatch() {
   }
 
   function checkMatched(invoice) {
-    if (invoice.xeroClientId != null && selectedMatch == "Matched") {
+    if (
+      (invoice.xeroInvoiceId != null || invoice.checked == 1) &&
+      selectedMatch == "Matched"
+    ) {
       return true;
     } else if (selectedMatch == "All") {
       return true;
-    } else if (invoice.xeroClientId == null && selectedMatch == "Unmatched") {
+    } else if (
+      invoice.xeroClientId == null &&
+      invoice.checked == 0 &&
+      selectedMatch == "Unmatched"
+    ) {
       return true;
     } else {
       return false;
