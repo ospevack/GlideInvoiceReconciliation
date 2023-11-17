@@ -1,19 +1,16 @@
 import Navbar from "../../../components/navbar";
 import CompListBox from "./Component-List";
-import { Fragment, useState, useEffect } from "react";
-import axios from "axios";
-import MatchRow from "./MatchRow";
-import Fuse from "fuse.js";
-import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import CompMatch from "./Component-Matched";
+import InvRow from "./Component-InvRow";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import SalesSubNav from "../../../components/SalesSubNav";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function ExcelMatch() {
+export default function InvoiceList() {
   const [invoices, setInvoices] = useState([]);
   const [sheets, setSheets] = useState([]);
   const [selectedSheets, setSelectedSheets] = useState([]);
@@ -22,6 +19,7 @@ export default function ExcelMatch() {
   const [xeroInvoices, setXeroInvoices] = useState([]);
   const [xeroCreditNotes, setXeroCreditNotes] = useState([]);
   const [clientList, setClientList] = useState([]);
+  const [reconcilingItems, setReconcilingItems] = useState([]);
 
   useEffect(() => {
     axios
@@ -44,6 +42,15 @@ export default function ExcelMatch() {
       .catch((error) => {
         console.log(error);
       });
+    axios
+      .get("/api/reconciliation/items")
+      .then((response) => {
+        setReconcilingItems(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
     axios
       .get("/api/xero/sales/invoices", {
         params: { where: 'Type=="ACCREC"' },
@@ -75,93 +82,10 @@ export default function ExcelMatch() {
 
   function filterInvoices() {
     setFilteredInvoices(
-      invoices.filter(
-        (invoice) =>
-          selectedSheets.includes(invoice.sheet) && checkMatched(invoice)
-      )
+      invoices.filter((invoice) => selectedSheets.includes(invoice.sheet))
     );
   }
 
-  function checkMatched(invoice) {
-    if (
-      (invoice.xeroInvoiceId != null || invoice.checked == 1) &&
-      selectedMatch == "Matched"
-    ) {
-      return true;
-    } else if (selectedMatch == "All") {
-      return true;
-    } else if (
-      invoice.xeroClientId == null &&
-      invoice.checked == 0 &&
-      selectedMatch == "Unmatched"
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  function fuseFuzzyName(invoice) {
-    //check to see if its a credit note
-    if (invoice.type == "Credit") {
-      //Match already?
-      if (invoice.xeroCreditNoteId != null) {
-        return {
-          score: 100,
-          item: xeroCreditNotes.filter(
-            (xeroCreditNote) =>
-              xeroCreditNote.CreditNoteID == invoice.xeroCreditNoteId
-          )[0],
-        };
-      }
-
-      //do credit note number matching first
-      var creditNoteNoMatch = xeroCreditNotes.filter((inv) => {
-        return inv.CreditNoteNumber == invoice.number;
-      });
-      if (creditNoteNoMatch.length > 0) {
-        return {
-          score: 100,
-          item: creditNoteNoMatch[0],
-        };
-      }
-    }
-    //Check to see if theres a match already
-    if (invoice.xeroInvoiceId != null) {
-      return {
-        score: 100,
-        item: xeroInvoices.filter(
-          (xeroInvoice) => xeroInvoice.InvoiceID == invoice.xeroInvoiceId
-        )[0],
-      };
-    }
-
-    //do invoice number matching first
-    var invoiceNoMatch = xeroInvoices.filter((inv) => {
-      return inv.InvoiceNumber == invoice.number;
-    });
-    //console.log(invoiceNoMatch);
-    if (invoiceNoMatch.length > 0) {
-      return {
-        score: 100,
-        item: invoiceNoMatch[0],
-      };
-    }
-
-    // const options = {
-    //   includeScore: true,
-    //   keys: [
-    //     { name: "name", getFn: (x) => x.Contact.Name },
-    //     { name: "inv", getFn: (x) => x.InvoiceNumber },
-    //   ],
-    // };
-    // const fuse = new Fuse(xeroInvoices, options);
-    // const result = fuse.search(
-    //   { $and: [{ name: invoice.client }, { inv: invoice.number }] },
-    //   { limit: 5 }
-    // );
-    // return result[0];
-  }
   function refreshDaybook() {
     axios
       .get("/api/daybook/invoices")
@@ -173,41 +97,6 @@ export default function ExcelMatch() {
       });
   }
 
-  function matchInvoice(Daybook, Xero, Switch) {
-    if (Switch == "link") {
-      axios
-        .post("/api/daybook/invoices/link", {
-          Daybook: Daybook,
-          Xero: Xero.item,
-        })
-        .then((response) => {
-          //console.log(response);
-          if (
-            response.data.affectedRows == 1 &&
-            response.data.changedRows == 1
-          ) {
-            var newInvoices = invoices.map((invoice) => {
-              if (invoice.id == Daybook.id) {
-                return {
-                  ...invoice,
-                  xeroInvoiceId: Xero.item.InvoiceID,
-                  xeroClientId: Xero.item.Contact.ContactID,
-                };
-              }
-              return invoice;
-            });
-            setInvoices(newInvoices);
-          }
-        });
-    } else if (Switch == "unlink") {
-      axios
-        .delete("/api/daybook/invoices/link/" + Daybook.id)
-        .then((response) => {
-          console.log(response);
-          refreshDaybook();
-        });
-    }
-  }
   function removeSelected(sheet) {
     setSelectedSheets(selectedSheets.filter((item) => item !== sheet));
   }
@@ -216,12 +105,12 @@ export default function ExcelMatch() {
     <>
       <div className="min-h-full">
         <Navbar PageName="SalesRec" />
-        <SalesSubNav PageName={"Match"} />
+        <SalesSubNav PageName={"Invoices"} />
         <div className="py-10">
           <header>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-                Excel Match
+                Matched Invoices to Xero
               </h1>
             </div>
           </header>
@@ -306,26 +195,49 @@ export default function ExcelMatch() {
               </div>
             </div>
             <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-              <div className="flex items-center my-2 border-b border-slate-400">
-                <div className="basis-5/12 mr-4">
+              <div className="grid grid-cols-4 gap-4 my-2 border-b border-slate-400">
+                <div>
                   <span className="text-xl font-medium text-gray-900">
                     Daybook
                   </span>
                 </div>
-                <div className="basis-2/12 w-64 p-4"></div>
-                <div className="basis-5/12 ml-4">
+                <div>
                   <span className="text-xl font-medium text-gray-900">
                     Xero
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xl font-medium text-gray-900">
+                    Recon Items
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xl font-medium text-gray-900">
+                    Difference
                   </span>
                 </div>
               </div>
               <div className="divide-y divide-gray-200">
                 {filteredInvoices.length > 0
                   ? filteredInvoices.map((invoice) => (
-                      <MatchRow
+                      <InvRow
                         DaybookInvoice={invoice}
-                        XeroInvoice={fuseFuzzyName(invoice)}
-                        matchInvoice={matchInvoice}
+                        XeroInvoice={
+                          invoice.xeroInvoiceId != null
+                            ? xeroInvoices?.filter(
+                                (item) =>
+                                  invoice.xeroInvoiceId == item.InvoiceID
+                              )[0]
+                            : invoice.xeroCreditNoteId != null
+                            ? xeroCreditNotes?.filter(
+                                (item) =>
+                                  invoice.xeroCreditNoteId == item.CreditNoteID
+                              )[0]
+                            : null
+                        }
+                        reconcilingItems={reconcilingItems?.filter(
+                          (item) => item.invoice_id == invoice.id
+                        )}
                       />
                     ))
                   : null}

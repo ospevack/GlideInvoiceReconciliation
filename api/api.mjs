@@ -77,6 +77,16 @@ app.post("/daybook/invoices/link", (req, res) => {
   );
 });
 
+app.get("/reconciliation/items", async (req, res, next) => {
+  connection.query(
+    "SELECT * FROM reconciling_items",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.get("/xero/sales/invoices", async (req, res, next) => {
   try {
     const result = await nango
