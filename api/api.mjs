@@ -87,6 +87,17 @@ app.get("/reconciliation/items", async (req, res, next) => {
   );
 });
 
+app.post("/reconciliation/adjust", async (req, res, next) => {
+  connection.query(
+    "UPDATE daybook t set t.adjustment = ? WHERE t.id = ?",
+    [+req.body.difference / -1, req.body.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.get("/xero/sales/invoices", async (req, res, next) => {
   try {
     const result = await nango
