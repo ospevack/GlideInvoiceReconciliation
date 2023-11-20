@@ -6,6 +6,7 @@ import DaybookExcelShow from "./routes/Daybooks/Excel/Show.jsx";
 import ClientList from "./routes/Clients/list.jsx";
 import InvoiceList from "./routes/Sales/Excel/invoices.jsx";
 import SalesReconciliation from "./routes/Sales/Excel/reconciliation.jsx";
+import XeroSync from "./routes/Clients/XeroSyncList.jsx";
 
 export default function App() {
   return (
@@ -17,7 +18,8 @@ export default function App() {
         <Route path="/Sales/Invoices" element={<InvoiceList />} />
         <Route path="/Sales/Reconciliation" element={<SalesReconciliation />} />
         <Route path="/Daybooks/Excel" element={<DaybookExcelShow />} />
-        <Route path="/Clients" element={<ClientList />} />
+        <Route path="/Clients/list" element={<ClientList />} />
+        <Route path="/Clients/XeroSync" element={<XeroSync />} />
       </Routes>
     </BrowserRouter>
   );

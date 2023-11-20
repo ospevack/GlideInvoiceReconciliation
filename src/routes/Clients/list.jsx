@@ -1,13 +1,7 @@
 import Navbar from "../../components/navbar";
 import axios from "axios";
 import { useState, useEffect } from "react";
-
-const navigation = [
-  { name: "Dashboard", href: "/", current: false },
-  { name: "Sales Rec (Excel/Xero)", href: "/Sales/ExcelMatch", current: false },
-  { name: "Daybooks", href: "/Daybooks/Excel", current: false },
-  { name: "Clients", href: "/Clients/List", current: true },
-];
+import ClientsSubNav from "../../components/ClientsSubNav";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -36,7 +30,7 @@ export default function ClientList() {
     <>
       <div className="min-h-full">
         <Navbar PageName="Clients" />
-
+        <ClientsSubNav PageName="List" />
         <div className="py-10">
           <header>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -82,6 +76,12 @@ export default function ClientList() {
                             scope="col"
                             className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                           >
+                            Contact groups
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                          >
                             Xero Link
                           </th>
                           <th
@@ -96,16 +96,27 @@ export default function ClientList() {
                         {clients.map((client) => (
                           <tr key={client.id}>
                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
-                              {client.code}
+                              {client.AccountNumber}
                             </td>
                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
                               {client.name}
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {client.xeroId.length > 0 ? "Yes" : "No"}
+                              {client.XeroContactGroups.length > 0 ? (
+                                <>
+                                  {client.XeroContactGroups.map((group) => (
+                                    <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                      {group.Name}
+                                    </span>
+                                  ))}
+                                </>
+                              ) : null}
                             </td>
                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {client.glideId.length > 0 ? "Yes" : "No"}
+                              {client.XeroContactID.length > 0 ? "Yes" : "No"}
+                            </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                              {client.glideId?.length > 0 ? "Yes" : "No"}
                             </td>
                           </tr>
                         ))}
