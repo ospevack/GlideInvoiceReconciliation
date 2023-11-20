@@ -253,9 +253,7 @@ export default function SalesReconciliation() {
     filterCurrentDifferences();
   }, [xeroFilteredInvoices, xeroFilteredCreditNotes]);
 
-  useEffect(() => {
-    //this is effectively our reconciliation function
-
+  function daybookDifferenceCalc() {
     //look at daybook differences first
     var dbDiff = [];
     //invoices
@@ -309,6 +307,12 @@ export default function SalesReconciliation() {
       }
     });
     setDaybookDifferences(dbDiff);
+  }
+
+  useEffect(() => {
+    //this is effectively our reconciliation function
+
+    daybookDifferenceCalc();
 
     //next lets get all daybook invoices that feature in the future months (but we need to take Xero values, as we have adjusted the daybook differences to all invoices, above.)
     var futInvs = filteredInvoices.filter(
@@ -411,6 +415,14 @@ export default function SalesReconciliation() {
   function AddAdjustment(invoice) {
     axios.post("/api/reconciliation/adjust", invoice).then((response) => {
       console.log(response.data);
+      if (response.data.affectedRows == 1 && response.data.changedRows == 1) {
+        var newInvoice = invoices.find((x) => x.id == invoice.id);
+        newInvoice.adjustment = invoice.difference;
+        setInvoices(
+          invoices.map((item) => (item.id == invoice.id ? newInvoice : item))
+        );
+        daybookDifferenceCalc();
+      }
     });
   }
 
@@ -450,13 +462,13 @@ export default function SalesReconciliation() {
                         />
                       )}
                     </span>
-                    {/*<span className="ml-auto flex items-center text-sm">
+                    <span className="ml-auto flex items-center text-sm">
                       <span className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
                         <button onClick={() => clearSelected()}>
                           clear all
                         </button>
                       </span>
-                      <span>
+                      {/*<span>
                         <button
                           className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
                           onClick={() => {
@@ -467,8 +479,8 @@ export default function SalesReconciliation() {
                         >
                           select all
                         </button>
-                      </span>
-                        </span>*/}
+                      </span>*/}
+                    </span>
                   </span>
                   {/* <span className=" px-2">
                     <span>
@@ -769,7 +781,14 @@ export default function SalesReconciliation() {
                       {formatCurrency.format(+invoice.xeroSubTotal || 0)}
                     </div>
                     <div className="text-sm text-gray-600">
-                      <a href="#" onClick={() => AddAdjustment(invoice)}>
+                      <a
+                        href="#"
+                        className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          AddAdjustment(invoice);
+                        }}
+                      >
                         {formatCurrency.format(invoice.difference)}
                       </a>
                     </div>
