@@ -7,6 +7,9 @@ import ClientList from "./routes/Clients/list.jsx";
 import InvoiceList from "./routes/Sales/Excel/invoices.jsx";
 import SalesReconciliation from "./routes/Sales/Excel/reconciliation.jsx";
 import XeroSync from "./routes/Clients/XeroSyncList.jsx";
+import PaymentSheet from "./routes/Payment/Sheet.jsx";
+import ClassifyClients from "./routes/Payment/ClassifyClient.jsx";
+import ClassifyInvoices from "./routes/Payment/ClassifyInvoice.jsx";
 
 export default function App() {
   return (
@@ -20,6 +23,12 @@ export default function App() {
         <Route path="/Daybooks/Excel" element={<DaybookExcelShow />} />
         <Route path="/Clients/list" element={<ClientList />} />
         <Route path="/Clients/XeroSync" element={<XeroSync />} />
+        <Route path="/Payment/Sheet" element={<PaymentSheet />} />
+        <Route path="/Payment/ClassifyClients" element={<ClassifyClients />} />
+        <Route
+          path="/Payment/ClassifyInvoices"
+          element={<ClassifyInvoices />}
+        />
       </Routes>
     </BrowserRouter>
   );

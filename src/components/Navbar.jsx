@@ -7,18 +7,31 @@ function classNames(...classes) {
 
 export default function Navbar({ PageName }) {
   const navigation = [
-    { name: "Dashboard", href: "/", current: PageName === "Dashboard" },
+    { id: 1, name: "Dashboard", href: "/", current: PageName === "Dashboard" },
     {
+      id: 2,
       name: "Sales Rec (Excel/Xero)",
       href: "/Sales/ExcelMatch",
       current: PageName === "SalesRec",
     },
     {
+      id: 3,
       name: "Daybooks",
       href: "/Daybooks/Excel",
       current: PageName === "Daybooks",
     },
-    { name: "Clients", href: "/Clients/list", current: PageName === "Clients" },
+    {
+      id: 4,
+      name: "Clients",
+      href: "/Clients/list",
+      current: PageName === "Clients",
+    },
+    {
+      id: 5,
+      name: "Payment",
+      href: "/Payment/Sheet",
+      current: PageName === "Payment",
+    },
   ];
   return (
     <Disclosure as="nav" className="border-b border-gray-200 bg-white">
@@ -37,7 +50,7 @@ export default function Navbar({ PageName }) {
                 <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
                   {navigation.map((item) => (
                     <a
-                      key={item.name}
+                      key={item.id}
                       href={item.href}
                       className={classNames(
                         item.current
@@ -71,7 +84,7 @@ export default function Navbar({ PageName }) {
             <div className="space-y-1 pb-3 pt-2">
               {navigation.map((item) => (
                 <Disclosure.Button
-                  key={item.name}
+                  key={item.id}
                   as="a"
                   href={item.href}
                   className={classNames(
