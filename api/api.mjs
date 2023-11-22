@@ -77,6 +77,27 @@ app.post("/clients", (req, res) => {
     }
   );
 });
+app.post("/clients/:id/calcgroup", (req, res) => {
+  connection.query(
+    "UPDATE clients t set t.CalcGroup = ? WHERE t.id = ?",
+    [req.body.CalcGroup, req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+app.delete("/clients/:id/calcgroup", (req, res) => {
+  connection.query(
+    "UPDATE clients t set t.CalcGroup = NULL WHERE t.id = ?",
+    [req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.delete("/daybook/invoices/link/:id", (req, res) => {
   connection.query(
     "UPDATE daybook t set t.xeroClientId = NULL, t.xeroInvoiceId = NULL WHERE t.id = ?",
@@ -209,6 +230,16 @@ app.get("/xero/contact/:id", async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+app.get("/payment/all", async (req, res, next) => {
+  connection.query(
+    "select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
 });
 
 app.listen(5678, () => {

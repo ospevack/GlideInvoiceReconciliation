@@ -10,6 +10,7 @@ import XeroSync from "./routes/Clients/XeroSyncList.jsx";
 import PaymentSheet from "./routes/Payment/Sheet.jsx";
 import ClassifyClients from "./routes/Payment/ClassifyClient.jsx";
 import ClassifyInvoices from "./routes/Payment/ClassifyInvoice.jsx";
+import PaymentSummary from "./routes/Payment/Summary.jsx";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           path="/Payment/ClassifyInvoices"
           element={<ClassifyInvoices />}
         />
+        <Route path="/Payment/Summary" element={<PaymentSummary />} />
       </Routes>
     </BrowserRouter>
   );

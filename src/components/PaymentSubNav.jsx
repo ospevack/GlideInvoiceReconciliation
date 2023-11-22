@@ -1,6 +1,12 @@
 export default function PaymentSubNav({ PageName }) {
   const navigation = [
     {
+      id: 0,
+      name: "Summary",
+      href: "/Payment/Summary",
+      current: PageName === "Summary",
+    },
+    {
       id: 1,
       name: "Payment Sheet",
       href: "/Payment/Sheet",
