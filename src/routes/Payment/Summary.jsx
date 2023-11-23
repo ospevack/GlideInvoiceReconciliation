@@ -17,6 +17,10 @@ export default function PaymentSummary() {
 
   const [daybook, setDaybook] = useState([]);
   const summaryTable = useRef(null);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [lostClients, setLostClients] = useState(0);
+  const [osaClients, setOsaClients] = useState(0);
+  const [ltdClients, setLtdClients] = useState(0);
 
   useEffect(() => {
     axios
@@ -28,6 +32,20 @@ export default function PaymentSummary() {
         console.log(err);
       });
   }, []);
+
+  useEffect(() => {
+    setTotalInvoices(sumInvoices(daybook));
+    setLostClients(
+      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "Lost")) / -1
+    );
+    setOsaClients(
+      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "OSA")) / -1
+    );
+    setLtdClients(
+      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "New-Ltd")) /
+        -1
+    );
+  }, [daybook]);
 
   function sumInvoices(invoices) {
     return invoices.reduce((total, invoice) => {
@@ -105,16 +123,67 @@ export default function PaymentSummary() {
               >
                 <thead>
                   <tr>
-                    <td>Date</td>
-                    <td>Number</td>
-                    <td>Amount</td>
-                    <td></td>
-                    <td>Lost</td>
-                    <td>OSA</td>
-                    <td>New Business (Ltd)</td>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200"></th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      £
+                    </th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      £
+                    </th>
                   </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Total invoices raised
+                    </td>
+                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {formatCurrency.format(totalInvoices)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Less: Lost Clients
+                    </td>
+                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {formatCurrency.format(lostClients)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Less: OSA Clients
+                    </td>
+                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {formatCurrency.format(osaClients)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Less: New Ltd Co Clients
+                    </td>
+                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {formatCurrency.format(ltdClients)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
+                      Remaining invoices
+                    </td>
+                    <td></td>
+                    <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
+                      {formatCurrency.format(
+                        +totalInvoices +
+                          +lostClients +
+                          +osaClients +
+                          +ltdClients
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </main>

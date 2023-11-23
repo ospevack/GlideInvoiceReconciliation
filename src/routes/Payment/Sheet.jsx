@@ -275,6 +275,131 @@ export default function PaymentSheet() {
                       </>
                     ))}
                 </tbody>
+                <tfoot>
+                  <tr className="text-lg text-bold border-t-2 border-indigo-600">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook.reduce((total, invoice) => {
+                        return (
+                          total +
+                          +invoice.Fees +
+                          +invoice.disb +
+                          +invoice.adjustment +
+                          +invoice.adjusting_amount
+                        );
+                      }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook.reduce((total, invoice) => {
+                          return (
+                            total +
+                            +invoice.Fees +
+                            +invoice.disb +
+                            +invoice.adjustment +
+                            +invoice.adjusting_amount
+                          );
+                        }, 0)
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={
+                        daybook
+                          .filter((x) => x.CalcGroup == "Lost")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      }
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) => x.CalcGroup == "Lost")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={
+                        daybook
+                          .filter((x) => x.CalcGroup == "OSA")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      }
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) => x.CalcGroup == "OSA")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={
+                        daybook
+                          .filter((x) => x.CalcGroup == "New-Ltd")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      }
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) => x.CalcGroup == "New-Ltd")
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      )}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </main>

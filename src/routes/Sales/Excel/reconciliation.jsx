@@ -485,20 +485,22 @@ export default function SalesReconciliation() {
                           clear all
                         </button>
                       </span>
-                      {/*<span>
+                      <span>
                         <button
                           className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
                           onClick={() => {
                             setSelectedSheets([
                               ...new Set(invoices.map((item) => item.sheet)),
                             ]);
+                            setSelectedDates(DateLookups);
                           }}
                         >
                           select all
                         </button>
-                      </span>*/}
+                      </span>
                     </span>
                   </span>
+                  {/*
                   {/* <span className=" px-2">
                     <span>
                       <CompMatch
