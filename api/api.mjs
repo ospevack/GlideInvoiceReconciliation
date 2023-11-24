@@ -244,7 +244,34 @@ app.get("/xero/contact/:id", async (req, res, next) => {
 
 app.get("/payment/all", async (req, res, next) => {
   connection.query(
-    "select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID",
+    "select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
+app.post("/payment/classification", async (req, res, next) => {
+  connection.query(
+    "INSERT INTO payment_classifications (invoice_id, status, adj_amount,adj_reason) VALUES (?,?,?,?)",
+    [
+      req.body.invoice_id,
+      req.body.status,
+      req.body.adj_amount,
+      req.body.adj_reason,
+    ],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
+app.delete("/payment/classification/:id", async (req, res, next) => {
+  connection.query(
+    "DELETE FROM payment_classifications WHERE invoice_id = ?",
+    [req.params.id],
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);
