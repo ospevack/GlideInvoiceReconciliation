@@ -87,6 +87,16 @@ app.post("/clients/:id/calcgroup", (req, res) => {
     }
   );
 });
+app.get("/clients/CalcGroups", (req, res) => {
+  connection.query(
+    "SELECT DISTINCT t.CalcGroup FROM clients t WHERE t.CalcGroup IS NOT NULL",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.delete("/clients/:id/calcgroup", (req, res) => {
   connection.query(
     "UPDATE clients t set t.CalcGroup = NULL WHERE t.id = ?",

@@ -66,7 +66,7 @@ export default function PaymentSummary() {
     <>
       <div className="min-h-full">
         <Navbar PageName="Payment" />
-        <PaymentSubNav PageName={"Sheet"} />
+        <PaymentSubNav PageName={"Summary"} />
         <div className="py-10">
           <header>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

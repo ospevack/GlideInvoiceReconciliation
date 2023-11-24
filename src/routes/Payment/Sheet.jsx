@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
+import FilterCalcGroups from "./Filter-CalcGroups";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -17,6 +18,9 @@ export default function PaymentSheet() {
 
   const [daybook, setDaybook] = useState([]);
   const [uniqueClientList, setuniqueClientList] = useState([]);
+  const [filteredUniqueClientList, setfilteredUniqueClientList] = useState([]);
+  const [selectedCalcGroups, setSelectedCalcGroups] = useState([]);
+  const [calcGroups, setCalcGroups] = useState([]);
   const sheetTable = useRef(null);
 
   useEffect(() => {
@@ -28,6 +32,11 @@ export default function PaymentSheet() {
       .catch((err) => {
         console.log(err);
       });
+    axios.get("/api/clients/calcgroups").then((res) => {
+      var tempCalcGroups = res.data.map((item) => item.CalcGroup);
+      tempCalcGroups.push("None");
+      setCalcGroups(tempCalcGroups);
+    });
   }, []);
 
   useEffect(() => {
@@ -39,6 +48,21 @@ export default function PaymentSheet() {
     });
     setuniqueClientList(uniqueClientList);
   }, [daybook]);
+
+  useEffect(() => {
+    console.log(selectedCalcGroups);
+    setfilteredUniqueClientList(
+      uniqueClientList.filter((x) => {
+        //console.log(x == null && selectedCalcGroups.includes("None"));
+        return selectedCalcGroups.includes(
+          daybook.find((y) => y.xeroClientId == x).CalcGroup ?? "None"
+        );
+      })
+    );
+  }, [selectedCalcGroups]);
+  // useEffect(() => {
+  //   console.log(filteredUniqueClientList);
+  // }, [filteredUniqueClientList]);
 
   function clientLookup(client) {
     //console.log(daybook.find((x) => x.xeroClientId === client).name);
@@ -63,6 +87,10 @@ export default function PaymentSheet() {
         +invoice.adjusting_amount
       );
     }, 0);
+  }
+
+  function removeSelected(group) {
+    setSelectedCalcGroups(selectedCalcGroups.filter((item) => item !== group));
   }
 
   return (
@@ -101,14 +129,31 @@ export default function PaymentSheet() {
                     Filters
                   </span>
                   <span className=" px-2"></span>
-                  {/* <span className=" px-2">
+                  <span className=" px-2">
                     <span>
-                      <CompMatch
-                        selectedMatch={selectedMatch}
-                        setSelectedMatch={setSelectedMatch}
+                      <FilterCalcGroups
+                        label={"Calc Groups"}
+                        options={calcGroups}
+                        selectedGroups={selectedCalcGroups}
+                        setSelectedGroups={setSelectedCalcGroups}
                       />
                     </span>
-                  </span> */}
+                    <span className="ml-auto flex items-center text-sm">
+                      <span className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
+                        <button onClick={() => setSelectedCalcGroups([])}>
+                          clear all
+                        </button>
+                      </span>
+                      <span>
+                        <button
+                          className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
+                          onClick={() => setSelectedCalcGroups(calcGroups)}
+                        >
+                          select all
+                        </button>
+                      </span>
+                    </span>
+                  </span>
                 </div>
               </div>
               <div className="border-2 border-indigo-600 rounded-md p-4">
@@ -116,6 +161,30 @@ export default function PaymentSheet() {
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters Applied
                   </span>
+                  {selectedCalcGroups.length > 1 && (
+                    <span className="flex flex-wrap">
+                      <span className="flex text-xs p-2">Sheets:</span>
+                      {selectedCalcGroups.map((group) => (
+                        <span className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                          {group}
+                          <button
+                            type="button"
+                            className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
+                            onClick={() => removeSelected(group)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg
+                              viewBox="0 0 14 14"
+                              className="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75"
+                            >
+                              <path d="M4 4l6 6m0-6l-6 6" />
+                            </svg>
+                            <span className="absolute -inset-1" />
+                          </button>
+                        </span>
+                      ))}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -136,8 +205,8 @@ export default function PaymentSheet() {
                   </tr>
                 </thead>
                 <tbody>
-                  {uniqueClientList?.length > 0 &&
-                    uniqueClientList.map((client) => (
+                  {filteredUniqueClientList?.length > 0 &&
+                    filteredUniqueClientList.map((client) => (
                       <>
                         <tr className="border-b-2">
                           <td className="text-bold text-base" colspan={4}>
@@ -283,18 +352,11 @@ export default function PaymentSheet() {
                     <td
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
-                      data-v={daybook.reduce((total, invoice) => {
-                        return (
-                          total +
-                          +invoice.Fees +
-                          +invoice.disb +
-                          +invoice.adjustment +
-                          +invoice.adjusting_amount
-                        );
-                      }, 0)}
-                    >
-                      {formatCurrency.format(
-                        daybook.reduce((total, invoice) => {
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .reduce((total, invoice) => {
                           return (
                             total +
                             +invoice.Fees +
@@ -302,7 +364,22 @@ export default function PaymentSheet() {
                             +invoice.adjustment +
                             +invoice.adjusting_amount
                           );
-                        }, 0)
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0)
                       )}
                     </td>
                     <td
@@ -310,6 +387,9 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "Lost")
                           .reduce((total, invoice) => {
                             return (
@@ -324,6 +404,9 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "Lost")
                           .reduce((total, invoice) => {
                             return (
@@ -341,6 +424,9 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "OSA")
                           .reduce((total, invoice) => {
                             return (
@@ -355,6 +441,9 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "OSA")
                           .reduce((total, invoice) => {
                             return (
@@ -372,6 +461,9 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "New-Ltd")
                           .reduce((total, invoice) => {
                             return (
@@ -386,6 +478,9 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "New-Ltd")
                           .reduce((total, invoice) => {
                             return (
