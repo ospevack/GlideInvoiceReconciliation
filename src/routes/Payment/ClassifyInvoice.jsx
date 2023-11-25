@@ -6,6 +6,7 @@ import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
 import FilterCalcGroups from "./Filter-CalcGroups";
 import WidClassifyInvoice from "./Widget-ClassifyInvoice";
+import FilterLineNumbers from "./Filter-ItemNumbers";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -23,6 +24,7 @@ export default function ClassifyInvoices() {
   const [selectedCalcGroups, setSelectedCalcGroups] = useState([]);
   const [calcGroups, setCalcGroups] = useState([]);
   const sheetTable = useRef(null);
+  const [linesFilter, setLinesFilter] = useState([]);
 
   useEffect(() => {
     axios
@@ -52,14 +54,13 @@ export default function ClassifyInvoices() {
 
   useEffect(() => {
     console.log(selectedCalcGroups);
-    setfilteredUniqueClientList(
-      uniqueClientList.filter((x) => {
-        //console.log(x == null && selectedCalcGroups.includes("None"));
-        return selectedCalcGroups.includes(
-          daybook.find((y) => y.xeroClientId == x).CalcGroup ?? "None"
-        );
-      })
-    );
+    var tempFilteredUniqueClientList = uniqueClientList.filter((x) => {
+      //console.log(x == null && selectedCalcGroups.includes("None"));
+      return selectedCalcGroups.includes(
+        daybook.find((y) => y.xeroClientId == x).CalcGroup ?? "None"
+      );
+    });
+    setfilteredUniqueClientList(tempFilteredUniqueClientList);
   }, [selectedCalcGroups]);
   // useEffect(() => {
   //   console.log(filteredUniqueClientList);
@@ -96,7 +97,37 @@ export default function ClassifyInvoices() {
 
   const AddClassification = async (classify) => {
     axios
-      .post("/api/payment/classify", { classify })
+      .post("/api/payment/classification", {
+        invoice_id: classify.invoice_id,
+        status: classify.status,
+        adj_reason: classify.adj_reason,
+        adj_amount: classify.adj_amount,
+      })
+      .then((res) => {
+        if (res.data.affectedRows == 1 && res.data.insertId > 0) {
+          var tempDaybook = daybook.map((item) => {
+            return item.daybook_id == classify.invoice_id
+              ? {
+                  clas_amount: classify.adj_amount,
+                  clas_reason: classify.adj_reason,
+                  clas_status: classify.status,
+                  ...item,
+                }
+              : item;
+          });
+          console.log(tempDaybook);
+          setDaybook(tempDaybook);
+        }
+      })
+
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  const RemoveClassification = async (invoiceId) => {
+    axios
+      .delete(`/api/payment/classification/${invoiceId}`)
       .then((res) => {
         console.log(res.data);
       })
@@ -140,7 +171,13 @@ export default function ClassifyInvoices() {
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters
                   </span>
-                  <span className=" px-2"></span>
+                  <span className=" px-2">
+                    <FilterLineNumbers
+                      label={"Line Numbers"}
+                      value={linesFilter}
+                      setValue={setLinesFilter}
+                    />
+                  </span>
                   <span className=" px-2">
                     <span>
                       <FilterCalcGroups
@@ -218,44 +255,53 @@ export default function ClassifyInvoices() {
                   {filteredUniqueClientList?.length > 0 &&
                     filteredUniqueClientList.map((client) => (
                       <>
-                        <tr className="border-b-2">
-                          <td className="text-bold text-base" colspan={4}>
+                        <tr key={client} className="border-b-2">
+                          <td className="text-bold text-base" colSpan={4}>
                             {clientLookup(client)} ({tagLookup(client)})
                           </td>
                         </tr>
-                        {daybook
-                          .filter((x) => x.xeroClientId === client)
-                          .map((item) => (
-                            <tr>
-                              <td>
-                                {new Date(item.date).toLocaleDateString(
-                                  "en-GB"
-                                )}
-                              </td>
-                              <td>{item.number}</td>
-                              <td
-                                data-t="n"
-                                data-z="#,##0.00;(#,##0.00);0"
-                                data-v={
-                                  +item.Fees +
-                                  +item.disb +
-                                  +item.adjustment +
-                                  +item.adjusting_amount
-                                }
-                              >
-                                {formatCurrency.format(
-                                  +item.Fees +
-                                    +item.disb +
-                                    +item.adjustment +
-                                    +item.adjusting_amount
-                                )}
-                              </td>
-                              <td></td>
-                              <td>
-                                <WidClassifyInvoice invoice={item} />
-                              </td>
-                            </tr>
-                          ))}
+                        {daybook.filter((x) => x.xeroClientId === client)
+                          .length >= +linesFilter || linesFilter == 0
+                          ? daybook
+                              .filter((x) => x.xeroClientId === client)
+                              .map((item) => (
+                                <tr key={item.daybook_id}>
+                                  <td>
+                                    {new Date(item.date).toLocaleDateString(
+                                      "en-GB"
+                                    )}
+                                  </td>
+                                  <td>{item.number}</td>
+                                  <td
+                                    data-t="n"
+                                    data-z="#,##0.00;(#,##0.00);0"
+                                    data-v={
+                                      +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
+                                    }
+                                  >
+                                    {formatCurrency.format(
+                                      +item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount
+                                    )}
+                                  </td>
+                                  <td></td>
+                                  <td>
+                                    <WidClassifyInvoice
+                                      invoice={item}
+                                      AddClassification={AddClassification}
+                                      RemoveClassification={
+                                        RemoveClassification
+                                      }
+                                    />
+                                  </td>
+                                </tr>
+                              ))
+                          : null}
                         <tr className="border-t-2">
                           <td></td>
                           <td></td>

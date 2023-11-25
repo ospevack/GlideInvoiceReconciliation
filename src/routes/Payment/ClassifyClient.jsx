@@ -43,7 +43,7 @@ export default function ClassifyClients() {
     daybook.forEach((item) => {
       if (!uniqueClientList.some((x) => x.xeroClientId == item.xeroClientId)) {
         uniqueClientList.push({
-          id: item.id,
+          daybook_id: item.daybook_id,
           xeroClientId: item.xeroClientId,
           name: item.name,
           AccountNumber: item.AccountNumber,
@@ -64,7 +64,7 @@ export default function ClassifyClients() {
         if (res.data.affectedRows == 1 && res.data.changedRows == 1) {
           setDaybook(
             daybook.map((item) =>
-              item.id === id ? { ...item, CalcGroup: group } : item
+              item.daybook_id === id ? { ...item, CalcGroup: group } : item
             )
           );
         }
@@ -152,7 +152,7 @@ export default function ClassifyClients() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {uniqueClientList.map((client) => (
-                    <tr>
+                    <tr key={client.daybook_id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {client.AccountNumber}
                       </td>
@@ -175,7 +175,7 @@ export default function ClassifyClients() {
                               className="underline text-blue-500 text-xs"
                               onClick={(e) => {
                                 e.preventDefault();
-                                removeCalcGroup(client.id);
+                                removeCalcGroup(client.daybook_id);
                               }}
                             >
                               remove
@@ -187,7 +187,7 @@ export default function ClassifyClients() {
                             name="location"
                             className="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
                             onChange={(e) =>
-                              selectCalcGroup(client.id, e.target.value)
+                              selectCalcGroup(client.daybook_id, e.target.value)
                             }
                           >
                             {CalcGroups.map((group) => (
