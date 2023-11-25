@@ -102,21 +102,28 @@ export default function ClassifyInvoices() {
         status: classify.status,
         adj_reason: classify.adj_reason,
         adj_amount: classify.adj_amount,
+        adhoc_amount: classify.adhoc_amount,
+        adhoc_reason: classify.adhoc_reason,
+        clas_Description: classify.Description,
       })
       .then((res) => {
         if (res.data.affectedRows == 1 && res.data.insertId > 0) {
-          var tempDaybook = daybook.map((item) => {
-            return item.daybook_id == classify.invoice_id
-              ? {
-                  clas_amount: classify.adj_amount,
-                  clas_reason: classify.adj_reason,
-                  clas_status: classify.status,
-                  ...item,
-                }
-              : item;
-          });
-          console.log(tempDaybook);
-          setDaybook(tempDaybook);
+          setDaybook(
+            daybook.map((item) => {
+              return item.daybook_id == classify.invoice_id
+                ? {
+                    ...item,
+                    clas_amount: classify.adj_amount,
+                    clas_reason: classify.adj_reason,
+                    adhoc_amount: classify.adhoc_amount,
+                    adhoc_reason: classify.adhoc_reason,
+                    clas_status: classify.status,
+                    clas_Description: classify.Description,
+                    clas_amended: true,
+                  }
+                : item;
+            })
+          );
         }
       })
 
@@ -129,7 +136,26 @@ export default function ClassifyInvoices() {
     axios
       .delete(`/api/payment/classification/${invoiceId}`)
       .then((res) => {
-        console.log(res.data);
+        if (res.data.affectedRows == 1) {
+          setDaybook(
+            daybook.map((item) => {
+              return item.daybook_id == invoiceId
+                ? {
+                    ...item,
+                    clas_amount: null,
+                    clas_reason: null,
+                    clas_status: null,
+                    adhoc_amount: null,
+                    adhoc_reason: null,
+                    clas_Description: null,
+                    clas_amended: true,
+                  }
+                : item;
+            })
+          );
+        }
+
+        //console.log(res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -257,7 +283,15 @@ export default function ClassifyInvoices() {
                       <>
                         <tr key={client} className="border-b-2">
                           <td className="text-bold text-base" colSpan={4}>
-                            {clientLookup(client)} ({tagLookup(client)})
+                            <a
+                              href={`https://go.xero.com/app/!Pb2XD/contacts/contact/${
+                                client ?? null
+                              }`}
+                              target="_blank"
+                              className="underline text-gray-600 visited:text-purple-600 hover:text-gray-900"
+                            >
+                              {clientLookup(client)} ({tagLookup(client)})
+                            </a>
                           </td>
                         </tr>
                         {daybook.filter((x) => x.xeroClientId === client)
@@ -271,7 +305,15 @@ export default function ClassifyInvoices() {
                                       "en-GB"
                                     )}
                                   </td>
-                                  <td>{item.number}</td>
+                                  <td>
+                                    <a
+                                      className="underline text-gray-600 visited:text-purple-600 hover:text-gray-900"
+                                      href={`https://go.xero.com/app/!Pb2XD/invoicing/view/${item.xeroInvoiceId}`}
+                                      target="_blank"
+                                    >
+                                      {item.number}
+                                    </a>
+                                  </td>
                                   <td
                                     data-t="n"
                                     data-z="#,##0.00;(#,##0.00);0"

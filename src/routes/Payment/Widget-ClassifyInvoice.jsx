@@ -8,7 +8,10 @@ export default function WidClassifyInvoice({
   const [selection, setSelection] = useState(null);
   const [adjAmount, setAdjAmount] = useState(0);
   const [adjReason, setAdjReason] = useState("");
+  const [adhocAmount, setAdhocAmount] = useState(0);
+  const [adhocReason, setAdhocReason] = useState("");
   const [inv, setInv] = useState({});
+  const [Description, setDescription] = useState("");
 
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");
@@ -22,6 +25,9 @@ export default function WidClassifyInvoice({
           clas_amount: invoice.clas_amount,
           clas_reason: invoice.clas_reason,
           daybook_id: invoice.daybook_id,
+          adhoc_amount: invoice.adhoc_amount,
+          adhoc_reason: invoice.adhoc_reason,
+          clas_Description: invoice.Description,
         });
   }, [invoice]);
 
@@ -29,20 +35,20 @@ export default function WidClassifyInvoice({
     setSelection(inv.clas_status);
     setAdjAmount(+inv.clas_amount);
     setAdjReason(inv.clas_reason);
+    setAdhocAmount(+inv.adhoc_amount);
+    setAdhocReason(inv.adhoc_reason);
+    setDescription(inv.clas_Description);
   }, [inv]);
 
   const classify = () => {
-    console.log({
-      invoice_id: inv.daybook_id,
-      status: selection,
-      adj_amount: +adjAmount,
-      adj_reason: adjReason,
-    });
     AddClassification({
       invoice_id: inv.daybook_id,
       status: selection,
       adj_amount: +adjAmount,
       adj_reason: adjReason,
+      adhoc_amount: +adhocAmount,
+      adhoc_reason: adhocReason,
+      Description: Description,
     });
   };
 
@@ -69,7 +75,21 @@ export default function WidClassifyInvoice({
           <option value="include">Include</option>
           <option value="exclude">Exclude (Reason)</option>
           <option value="15percent">15%</option>
+          <option value="adhoc">Adhoc</option>
         </select>
+        {selection != "none" && (
+          <textarea
+            rows={5}
+            placeholder="Invoice Description"
+            onChange={(e) => setDescription(e.target.value)}
+            value={Description}
+            disabled={invoice.clas_status != null}
+            className={classNames(
+              "w-full my-1 rounded text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300",
+              invoice.clas_status != null ? "bg-gray-100" : "hover:bg-gray-50"
+            )}
+          />
+        )}
       </div>
       <div className="basis-1/3">
         {selection === "include" && (
@@ -96,6 +116,36 @@ export default function WidClassifyInvoice({
                 onChange={(e) => setAdjReason(e.target.value)}
                 disabled={invoice.clas_status != null}
                 value={adjReason}
+                className={classNames(
+                  "w-full mx-4 my-1 rounded text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300",
+                  invoice.clas_status != null
+                    ? "bg-gray-100"
+                    : "hover:bg-gray-50"
+                )}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Adhoc Amount"
+                onChange={(e) => setAdhocAmount(e.target.value)}
+                value={adhocAmount}
+                disabled={invoice.clas_status != null}
+                className={classNames(
+                  "w-full mx-4 my-1 rounded text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300",
+                  invoice.clas_status != null
+                    ? "bg-gray-100"
+                    : "hover:bg-gray-50"
+                )}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Adhoc Description"
+                onChange={(e) => setAdhocReason(e.target.value)}
+                disabled={invoice.clas_status != null}
+                value={adhocReason}
                 className={classNames(
                   "w-full mx-4 my-1 rounded text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300",
                   invoice.clas_status != null

@@ -245,7 +245,7 @@ app.get("/xero/contact/:id", async (req, res, next) => {
 app.get("/payment/all", async (req, res, next) => {
   connection.query(
     //"select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
-    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,adjusting_amount,adjusting_document,notes,name,AccountNumber,glideId,XeroContactGroups,CalcGroup,adj_amount clas_amount,adj_reason clas_reason,status clas_status from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
+    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);
@@ -255,12 +255,15 @@ app.get("/payment/all", async (req, res, next) => {
 
 app.post("/payment/classification", async (req, res, next) => {
   connection.query(
-    "INSERT INTO payment_classifications (invoice_id, status, adj_amount,adj_reason) VALUES (?,?,?,?)",
+    "INSERT INTO payment_classifications (invoice_id, status, adj_amount,adj_reason, adhoc_amount, adhoc_reason, Description) VALUES (?,?,?,?,?,?,?)",
     [
       req.body.invoice_id,
       req.body.status,
       req.body.adj_amount,
       req.body.adj_reason,
+      req.body.adhoc_amount,
+      req.body.adhoc_reason,
+      req.body.clas_Description,
     ],
     function (err, results, fields) {
       if (err) throw err;
