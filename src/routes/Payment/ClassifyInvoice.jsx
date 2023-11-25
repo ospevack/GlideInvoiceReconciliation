@@ -7,6 +7,7 @@ import PaymentSubNav from "../../components/PaymentSubNav";
 import FilterCalcGroups from "./Filter-CalcGroups";
 import WidClassifyInvoice from "./Widget-ClassifyInvoice";
 import FilterLineNumbers from "./Filter-ItemNumbers";
+import { Switch } from "@headlessui/react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -94,6 +95,27 @@ export default function ClassifyInvoices() {
   function removeSelected(group) {
     setSelectedCalcGroups(selectedCalcGroups.filter((item) => item !== group));
   }
+
+  const toggleCheckLine = async (item) => {
+    axios
+      .put(`/api/payment/togglecheck/${item}`, {
+        checkLine: !item.checkLine,
+      })
+      .then((res) => {
+        if (res.data.affectedRows == 1) {
+          setDaybook(
+            daybook.map((x) => {
+              return x.daybook_id == item
+                ? { ...x, checkLine: !x.checkLine }
+                : x;
+            })
+          );
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
   const AddClassification = async (classify) => {
     axios
@@ -331,7 +353,31 @@ export default function ClassifyInvoices() {
                                         +item.adjusting_amount
                                     )}
                                   </td>
-                                  <td></td>
+                                  <td>
+                                    <Switch
+                                      checked={item.checkLine}
+                                      onChange={() =>
+                                        toggleCheckLine(item.daybook_id)
+                                      }
+                                      className={classNames(
+                                        item.checkLine
+                                          ? "bg-indigo-600"
+                                          : "bg-gray-200",
+                                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                      )}
+                                    >
+                                      <span className="sr-only">Check</span>
+                                      <span
+                                        aria-hidden="true"
+                                        className={classNames(
+                                          item.checkLine
+                                            ? "translate-x-5"
+                                            : "translate-x-0",
+                                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                        )}
+                                      />
+                                    </Switch>
+                                  </td>
                                   <td>
                                     <WidClassifyInvoice
                                       invoice={item}

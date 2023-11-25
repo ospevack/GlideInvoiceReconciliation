@@ -27,7 +27,7 @@ export default function WidClassifyInvoice({
           daybook_id: invoice.daybook_id,
           adhoc_amount: invoice.adhoc_amount,
           adhoc_reason: invoice.adhoc_reason,
-          clas_Description: invoice.Description,
+          clas_Description: invoice.clas_description,
         });
   }, [invoice]);
 
@@ -37,7 +37,7 @@ export default function WidClassifyInvoice({
     setAdjReason(inv.clas_reason);
     setAdhocAmount(+inv.adhoc_amount);
     setAdhocReason(inv.adhoc_reason);
-    setDescription(inv.clas_Description);
+    setDescription(inv.clas_description);
   }, [inv]);
 
   const classify = () => {
