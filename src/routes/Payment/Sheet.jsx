@@ -93,6 +93,10 @@ export default function PaymentSheet() {
     setSelectedCalcGroups(selectedCalcGroups.filter((item) => item !== group));
   }
 
+  function checkExcludeStatus(status) {
+    return status == "include" ? false : status == "adhoc" ? false : true;
+  }
+
   return (
     <>
       <div className="min-h-full">
@@ -191,17 +195,24 @@ export default function PaymentSheet() {
             <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 pt-4">
               <table
                 ref={sheetTable}
-                className="w-full text-left table-fixed text-sm text-gray-900"
+                className="w-full text-left table-auto text-sm text-gray-900"
               >
                 <thead>
                   <tr>
+                    <td></td>
                     <td>Date</td>
                     <td>Number</td>
                     <td>Amount</td>
                     <td></td>
+                    <td>Cancelled</td>
                     <td>Lost</td>
                     <td>OSA</td>
                     <td>New Business (Ltd)</td>
+                    <td>Excluded/Superceded Inv</td>
+                    <td>Invoice</td>
+                    <td>Disb/Adjustments</td>
+                    <td>Adhoc</td>
+                    <td>Adhoc only inv</td>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,7 +220,7 @@ export default function PaymentSheet() {
                     filteredUniqueClientList.map((client) => (
                       <>
                         <tr className="border-b-2">
-                          <td className="text-bold text-base" colspan={4}>
+                          <td className="text-bold text-base" colSpan={13}>
                             {clientLookup(client)} ({tagLookup(client)})
                           </td>
                         </tr>
@@ -217,6 +228,7 @@ export default function PaymentSheet() {
                           .filter((x) => x.xeroClientId === client)
                           .map((item) => (
                             <tr>
+                              <td></td>
                               <td>
                                 {new Date(item.date).toLocaleDateString(
                                   "en-GB"
@@ -241,6 +253,28 @@ export default function PaymentSheet() {
                                 )}
                               </td>
                               <td></td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.cancelled == 1
+                                    ? (+item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount) /
+                                      -1
+                                    : 0
+                                }
+                              >
+                                {item.cancelled == 1 &&
+                                  formatCurrency.format(
+                                    (+item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount) /
+                                      -1
+                                  )}
+                              </td>
                               <td
                                 data-t="n"
                                 data-z="#,##0.00;(#,##0.00);0"
@@ -310,9 +344,125 @@ export default function PaymentSheet() {
                                     )
                                   : null}
                               </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  checkExcludeStatus(item.clas_status) &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null
+                                    ? (+item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount) /
+                                      -1
+                                    : 0
+                                }
+                              >
+                                {checkExcludeStatus(item.clas_status) &&
+                                item.cancelled != 1 &&
+                                item.CalcGroup == null
+                                  ? formatCurrency.format(
+                                      (+item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount) /
+                                        -1
+                                    )
+                                  : null}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.clas_status == "include" ||
+                                  (item.clas_status == "adhoc" &&
+                                    item.cancelled != 1 &&
+                                    item.CalcGroup == null)
+                                    ? +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
+                                    : 0
+                                }
+                              >
+                                {item.clas_status == "include" ||
+                                (item.clas_status == "adhoc" &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null)
+                                  ? formatCurrency.format(
+                                      +item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount
+                                    )
+                                  : null}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.clas_status == "include" &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null
+                                    ? +item.clas_amount
+                                    : 0
+                                }
+                              >
+                                {item.clas_status == "include" &&
+                                item.cancelled != 1 &&
+                                item.CalcGroup == null
+                                  ? formatCurrency.format(+item.clas_amount)
+                                  : null}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.clas_status == "include" &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null
+                                    ? +item.adhoc_amount
+                                    : 0
+                                }
+                              >
+                                {item.clas_status == "include" &&
+                                item.cancelled != 1 &&
+                                item.CalcGroup == null
+                                  ? formatCurrency.format(+item.adhoc_amount)
+                                  : null}
+                              </td>
+                              <td>
+                                <td
+                                  data-t="n"
+                                  data-z="#,##0.00;(#,##0.00);0"
+                                  data-v={
+                                    item.clas_status == "adhoc" &&
+                                    item.cancelled != 1 &&
+                                    item.CalcGroup == null
+                                      ? +item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount
+                                      : 0
+                                  }
+                                >
+                                  {item.clas_status == "adhoc" &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null
+                                    ? formatCurrency.format(
+                                        +item.Fees +
+                                          +item.disb +
+                                          +item.adjustment +
+                                          +item.adjusting_amount
+                                      )
+                                    : null}
+                                </td>
+                              </td>
                             </tr>
                           ))}
                         <tr className="border-t-2">
+                          <td></td>
                           <td></td>
                           <td></td>
                           <td></td>
@@ -346,6 +496,7 @@ export default function PaymentSheet() {
                 </tbody>
                 <tfoot>
                   <tr className="text-lg text-bold border-t-2 border-indigo-600">
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -390,6 +541,43 @@ export default function PaymentSheet() {
                           .filter((x) =>
                             filteredUniqueClientList.includes(x.xeroClientId)
                           )
+                          .filter((x) => x.cancelled == 1)
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      }
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter((x) => x.cancelled == 1)
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0) / -1
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
                           .filter((x) => x.CalcGroup == "Lost")
                           .reduce((total, invoice) => {
                             return (
@@ -491,6 +679,209 @@ export default function PaymentSheet() {
                               +invoice.adjusting_amount
                             );
                           }, 0) / -1
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .filter(
+                          (x) =>
+                            checkExcludeStatus(x.clas_status) &&
+                            x.cancelled != 1 &&
+                            x.CalcGroup == null
+                        )
+                        .reduce((total, invoice) => {
+                          return (
+                            total +
+                            +invoice.Fees +
+                            +invoice.disb +
+                            +invoice.adjustment +
+                            +invoice.adjusting_amount
+                          );
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter(
+                            (x) =>
+                              checkExcludeStatus(x.clas_status) &&
+                              x.cancelled != 1 &&
+                              x.CalcGroup == null
+                          )
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0)
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .filter(
+                          (x) =>
+                            x.clas_status == "include" ||
+                            (x.clas_status == "adhoc" &&
+                              x.cancelled != 1 &&
+                              x.CalcGroup == null)
+                        )
+                        .reduce((total, invoice) => {
+                          return (
+                            total +
+                            +invoice.Fees +
+                            +invoice.disb +
+                            +invoice.adjustment +
+                            +invoice.adjusting_amount
+                          );
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter(
+                            (x) =>
+                              x.clas_status == "include" ||
+                              (x.clas_status == "adhoc" &&
+                                x.cancelled != 1 &&
+                                x.CalcGroup == null)
+                          )
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0)
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .filter(
+                          (x) =>
+                            x.clas_status == "include" &&
+                            x.cancelled != 1 &&
+                            x.CalcGroup == null
+                        )
+                        .reduce((total, invoice) => {
+                          return total + +invoice.clas_amount;
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter(
+                            (x) =>
+                              x.clas_status == "include" &&
+                              x.cancelled != 1 &&
+                              x.CalcGroup == null
+                          )
+                          .reduce((total, invoice) => {
+                            return total + +invoice.clas_amount;
+                          }, 0)
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .filter(
+                          (x) =>
+                            x.clas_status == "include" &&
+                            x.cancelled != 1 &&
+                            x.CalcGroup == null
+                        )
+                        .reduce((total, invoice) => {
+                          return total + +invoice.adhoc_amount;
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter(
+                            (x) =>
+                              x.clas_status == "include" &&
+                              x.cancelled != 1 &&
+                              x.CalcGroup == null
+                          )
+                          .reduce((total, invoice) => {
+                            return total + +invoice.adhoc_amount;
+                          }, 0)
+                      )}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-z="#,##0.00;(#,##0.00);0"
+                      data-v={daybook
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
+                        )
+                        .filter(
+                          (x) =>
+                            x.clas_status == "adhoc" &&
+                            x.cancelled != 1 &&
+                            x.CalcGroup == null
+                        )
+                        .reduce((total, invoice) => {
+                          return (
+                            total +
+                            +invoice.Fees +
+                            +invoice.disb +
+                            +invoice.adjustment +
+                            +invoice.adjusting_amount
+                          );
+                        }, 0)}
+                    >
+                      {formatCurrency.format(
+                        daybook
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
+                          )
+                          .filter(
+                            (x) =>
+                              x.clas_status == "adhoc" &&
+                              x.cancelled != 1 &&
+                              x.CalcGroup == null
+                          )
+                          .reduce((total, invoice) => {
+                            return (
+                              total +
+                              +invoice.Fees +
+                              +invoice.disb +
+                              +invoice.adjustment +
+                              +invoice.adjusting_amount
+                            );
+                          }, 0)
                       )}
                     </td>
                   </tr>

@@ -26,6 +26,7 @@ export default function ClassifyInvoices() {
   const [calcGroups, setCalcGroups] = useState([]);
   const sheetTable = useRef(null);
   const [linesFilter, setLinesFilter] = useState([]);
+  const [lineNoMoreThan, setLineNoMoreThan] = useState(false);
 
   useEffect(() => {
     axios
@@ -225,7 +226,35 @@ export default function ClassifyInvoices() {
                       value={linesFilter}
                       setValue={setLinesFilter}
                     />
+                    <Switch.Group
+                      as="div"
+                      className="ml-auto text-sm flex items-center py-2"
+                    >
+                      <Switch
+                        checked={lineNoMoreThan}
+                        onChange={() => setLineNoMoreThan(!lineNoMoreThan)}
+                        className={classNames(
+                          lineNoMoreThan ? "bg-indigo-600" : "bg-gray-200",
+                          "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        )}
+                      >
+                        <span className="sr-only">More/Less than</span>
+                        <span
+                          aria-hidden="true"
+                          className={classNames(
+                            lineNoMoreThan ? "translate-x-5" : "translate-x-0",
+                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                          )}
+                        />
+                      </Switch>
+                      <Switch.Label as="span" className="ml-3 text-sm">
+                        <span className="font-sm text-gray-900">
+                          Less/More than
+                        </span>
+                      </Switch.Label>
+                    </Switch.Group>
                   </span>
+
                   <span className=" px-2">
                     <span>
                       <FilterCalcGroups
@@ -235,8 +264,8 @@ export default function ClassifyInvoices() {
                         setSelectedGroups={setSelectedCalcGroups}
                       />
                     </span>
-                    <span className="ml-auto flex items-center text-sm">
-                      <span className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
+                    <span className="ml-auto flex items-center text-sm py-2">
+                      <span className="flex mr-2 rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
                         <button onClick={() => setSelectedCalcGroups([])}>
                           clear all
                         </button>
@@ -316,8 +345,10 @@ export default function ClassifyInvoices() {
                             </a>
                           </td>
                         </tr>
-                        {daybook.filter((x) => x.xeroClientId === client)
-                          .length >= +linesFilter || linesFilter == 0
+                        {(daybook.filter((x) => x.xeroClientId === client)
+                          .length >= +linesFilter &&
+                          lineNoMoreThan == true) ||
+                        linesFilter == 0
                           ? daybook
                               .filter((x) => x.xeroClientId === client)
                               .map((item) => (
@@ -389,7 +420,80 @@ export default function ClassifyInvoices() {
                                   </td>
                                 </tr>
                               ))
-                          : null}
+                          : daybook.filter((x) => x.xeroClientId === client)
+                              .length <= +linesFilter &&
+                            lineNoMoreThan == false &&
+                            daybook
+                              .filter((x) => x.xeroClientId === client)
+                              .map((item) => (
+                                <tr key={item.daybook_id}>
+                                  <td>
+                                    {new Date(item.date).toLocaleDateString(
+                                      "en-GB"
+                                    )}
+                                  </td>
+                                  <td>
+                                    <a
+                                      className="underline text-gray-600 visited:text-purple-600 hover:text-gray-900"
+                                      href={`https://go.xero.com/app/!Pb2XD/invoicing/view/${item.xeroInvoiceId}`}
+                                      target="_blank"
+                                    >
+                                      {item.number}
+                                    </a>
+                                  </td>
+                                  <td
+                                    data-t="n"
+                                    data-z="#,##0.00;(#,##0.00);0"
+                                    data-v={
+                                      +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
+                                    }
+                                  >
+                                    {formatCurrency.format(
+                                      +item.Fees +
+                                        +item.disb +
+                                        +item.adjustment +
+                                        +item.adjusting_amount
+                                    )}
+                                  </td>
+                                  <td>
+                                    <Switch
+                                      checked={item.checkLine}
+                                      onChange={() =>
+                                        toggleCheckLine(item.daybook_id)
+                                      }
+                                      className={classNames(
+                                        item.checkLine
+                                          ? "bg-indigo-600"
+                                          : "bg-gray-200",
+                                        "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                      )}
+                                    >
+                                      <span className="sr-only">Check</span>
+                                      <span
+                                        aria-hidden="true"
+                                        className={classNames(
+                                          item.checkLine
+                                            ? "translate-x-5"
+                                            : "translate-x-0",
+                                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                        )}
+                                      />
+                                    </Switch>
+                                  </td>
+                                  <td>
+                                    <WidClassifyInvoice
+                                      invoice={item}
+                                      AddClassification={AddClassification}
+                                      RemoveClassification={
+                                        RemoveClassification
+                                      }
+                                    />
+                                  </td>
+                                </tr>
+                              ))}
                         <tr className="border-t-2">
                           <td></td>
                           <td></td>

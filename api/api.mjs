@@ -252,6 +252,15 @@ app.get("/payment/all", async (req, res, next) => {
     }
   );
 });
+app.get("/payment/transactions", async (req, res, next) => {
+  connection.query(
+    "select * from payment_transactions",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
 
 app.post("/payment/classification", async (req, res, next) => {
   connection.query(
