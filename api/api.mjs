@@ -53,10 +53,13 @@ app.get("/daybook/invoices", (req, res) => {
 });
 
 app.get("/clients", (req, res) => {
-  connection.query("SELECT * FROM clients", function (err, results, fields) {
-    if (err) throw err;
-    res.send(results);
-  });
+  connection.query(
+    "select c.id, name, XeroContactID, glideId, AccountNumber, XeroContactGroups, CalcGroup, COALESCE(i.GlideUserId, c.partner) partner from clients c left outer join original_partners i on c.AccountNumber = i.code",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
 });
 app.post("/clients", (req, res) => {
   connection.query(
@@ -249,7 +252,8 @@ app.get("/xero/contact/:id", async (req, res, next) => {
 app.get("/payment/all", async (req, res, next) => {
   connection.query(
     //"select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
-    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
+    //"select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner) partner,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
+    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner, '100010') partner,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id left outer join salesrec.original_partners i on c.AccountNumber = i.code",
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);

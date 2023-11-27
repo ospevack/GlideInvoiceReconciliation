@@ -5,6 +5,7 @@ import axios from "axios";
 import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
 import FilterCalcGroups from "./Filter-CalcGroups";
+import FilterPartners from "./Filter-Partners";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -22,6 +23,8 @@ export default function PaymentSheet() {
   const [selectedCalcGroups, setSelectedCalcGroups] = useState([]);
   const [calcGroups, setCalcGroups] = useState([]);
   const sheetTable = useRef(null);
+  const [selectedPartners, setSelectedPartners] = useState([]);
+  const [partners, setPartners] = useState([]);
 
   useEffect(() => {
     axios
@@ -37,6 +40,18 @@ export default function PaymentSheet() {
       tempCalcGroups.push("None");
       setCalcGroups(tempCalcGroups);
     });
+    axios
+      .get("/api/glide/users")
+      .then((response) => {
+        setPartners(
+          response.data.Users.User.filter(
+            (x) => x.Role.startsWith("Partner") || x.ID == "100010"
+          )
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }, []);
 
   useEffect(() => {
@@ -54,8 +69,13 @@ export default function PaymentSheet() {
     setfilteredUniqueClientList(
       uniqueClientList.filter((x) => {
         //console.log(x == null && selectedCalcGroups.includes("None"));
-        return selectedCalcGroups.includes(
-          daybook.find((y) => y.xeroClientId == x).CalcGroup ?? "None"
+        return (
+          selectedCalcGroups.includes(
+            daybook.find((y) => y.xeroClientId == x).CalcGroup ?? "None"
+          ) &&
+          selectedPartners.includes(
+            daybook.find((y) => y.xeroClientId == x).partner
+          )
         );
       })
     );
@@ -91,6 +111,10 @@ export default function PaymentSheet() {
 
   function removeSelected(group) {
     setSelectedCalcGroups(selectedCalcGroups.filter((item) => item !== group));
+  }
+
+  function removeSelectedPartner(group) {
+    setSelectedPartners(selectedPartners.filter((item) => item !== group));
   }
 
   function checkExcludeStatus(status) {
@@ -132,7 +156,33 @@ export default function PaymentSheet() {
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters
                   </span>
-                  <span className=" px-2"></span>
+                  <span className=" px-2">
+                    <span>
+                      <FilterPartners
+                        label={"Partner"}
+                        options={partners}
+                        selectedPartners={selectedPartners}
+                        setSelectedPartners={setSelectedPartners}
+                      />
+                    </span>
+                    <span className="ml-auto flex items-center text-sm">
+                      <span className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
+                        <button onClick={() => setSelectedPartners([])}>
+                          clear all
+                        </button>
+                      </span>
+                      <span>
+                        <button
+                          className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
+                          onClick={() =>
+                            setSelectedPartners(partners.map((p) => p.ID))
+                          }
+                        >
+                          select all
+                        </button>
+                      </span>
+                    </span>
+                  </span>
                   <span className=" px-2">
                     <span>
                       <FilterCalcGroups
@@ -189,10 +239,34 @@ export default function PaymentSheet() {
                       ))}
                     </span>
                   )}
+                  {selectedPartners.length > 1 && (
+                    <span className="flex flex-wrap">
+                      <span className="flex text-xs p-2">Partners:</span>
+                      {selectedPartners.map((group) => (
+                        <span className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                          {partners.find((x) => x.ID == group).Initials}
+                          <button
+                            type="button"
+                            className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
+                            onClick={() => removeSelectedPartner(group)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <svg
+                              viewBox="0 0 14 14"
+                              className="h-3.5 w-3.5 stroke-gray-600/50 group-hover:stroke-gray-600/75"
+                            >
+                              <path d="M4 4l6 6m0-6l-6 6" />
+                            </svg>
+                            <span className="absolute -inset-1" />
+                          </button>
+                        </span>
+                      ))}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 pt-4">
+            <div className="mx-auto max-w-full sm:px-6 lg:px-8 pt-4">
               <table
                 ref={sheetTable}
                 className="w-full text-left table-auto text-sm text-gray-900"
@@ -216,6 +290,7 @@ export default function PaymentSheet() {
                     <td>Description</td>
                     <td>Adj/Exclusion reason</td>
                     <td>Adhoc Desc</td>
+                    <td>NK Commission Client</td>
                   </tr>
                 </thead>
                 <tbody>
@@ -485,6 +560,47 @@ export default function PaymentSheet() {
                               <td>
                                 {/*Adhoc*/}
                                 {item.adhoc_reason}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.XeroContactGroups?.find(
+                                    (x) =>
+                                      x.ContactGroupID ==
+                                      "3a4099a1-5f5a-45e1-b9e0-e0e248c9a427"
+                                  ) &&
+                                  (item.clas_status == "include" ||
+                                    (item.clas_status == "adhoc" &&
+                                      item.cancelled != 1 &&
+                                      item.CalcGroup == null))
+                                    ? +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
+                                    : null
+                                }
+                              >
+                                {/*NK Commission Client*/}
+                                {item.XeroContactGroups?.find(
+                                  (x) =>
+                                    x.ContactGroupID ==
+                                    "3a4099a1-5f5a-45e1-b9e0-e0e248c9a427"
+                                ) ? (
+                                  <>
+                                    {item.clas_status == "include" ||
+                                    (item.clas_status == "adhoc" &&
+                                      item.cancelled != 1 &&
+                                      item.CalcGroup == null)
+                                      ? formatCurrency.format(
+                                          +item.Fees +
+                                            +item.disb +
+                                            +item.adjustment +
+                                            +item.adjusting_amount
+                                        )
+                                      : null}
+                                  </>
+                                ) : null}
                               </td>
                             </tr>
                           ))}

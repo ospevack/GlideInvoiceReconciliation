@@ -6,10 +6,10 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function FilterCalcGroups({
+export default function FilterPartners({
   options,
-  selectedGroups,
-  setSelectedGroups,
+  selectedPartners,
+  setSelectedPartners,
   label,
 }) {
   // useEffect(() => {
@@ -17,7 +17,7 @@ export default function FilterCalcGroups({
   // }, []);
 
   return (
-    <Listbox value={selectedGroups} onChange={setSelectedGroups} multiple>
+    <Listbox value={selectedPartners} onChange={setSelectedPartners} multiple>
       {({ open }) => (
         <>
           <Listbox.Label className="text-sm font-medium leading-6 text-gray-900">
@@ -25,15 +25,15 @@ export default function FilterCalcGroups({
           </Listbox.Label>
           <div className="relative mt-2">
             <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-              {selectedGroups.length > 1 ? (
+              {selectedPartners.length > 1 ? (
                 <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
                   Multiple...
                 </span>
-              ) : selectedGroups.length < 1 ? (
+              ) : selectedPartners.length < 1 ? (
                 <span className="">None Selected</span>
               ) : (
                 <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                  {selectedGroups[0]}
+                  {options.find((x) => x.ID == selectedPartners[0]).Initials}
                 </span>
               )}
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -54,24 +54,24 @@ export default function FilterCalcGroups({
               <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                 {Object.values(options).map((option) => (
                   <Listbox.Option
-                    key={option}
+                    key={option.ID}
                     className={({ active }) =>
                       classNames(
                         active ? "bg-indigo-600 text-white" : "text-gray-900",
                         "relative cursor-default select-none py-2 pl-3 pr-9"
                       )
                     }
-                    value={option}
+                    value={option.ID}
                   >
                     {({ selected, active }) => (
                       <>
                         <span
                           className={classNames(
-                            selectedGroups ? "font-semibold" : "font-normal",
+                            selectedPartners ? "font-semibold" : "font-normal",
                             "block truncate"
                           )}
                         >
-                          {option}
+                          {option.Initials}
                         </span>
 
                         {selected ? (

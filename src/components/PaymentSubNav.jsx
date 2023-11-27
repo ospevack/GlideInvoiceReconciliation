@@ -24,6 +24,12 @@ export default function PaymentSubNav({ PageName }) {
       href: "/Payment/ClassifyInvoices",
       current: PageName === "ClassifyInvoices",
     },
+    {
+      id: 4,
+      name: "Lost Client Commisions",
+      href: "/Payment/LostCommissions",
+      current: PageName === "LostCommissions",
+    },
   ];
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");

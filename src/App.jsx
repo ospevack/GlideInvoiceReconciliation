@@ -12,6 +12,7 @@ import ClassifyClients from "./routes/Payment/ClassifyClient.jsx";
 import ClassifyInvoices from "./routes/Payment/ClassifyInvoice.jsx";
 import PaymentSummary from "./routes/Payment/Summary.jsx";
 import GlideSync from "./routes/Clients/GlideSyncList.jsx";
+import LostCommissions from "./routes/Payment/LostCommissions.jsx";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/Clients/GlideSync" element={<GlideSync />} />
         <Route path="/Payment/Sheet" element={<PaymentSheet />} />
         <Route path="/Payment/ClassifyClients" element={<ClassifyClients />} />
+        <Route path="/Payment/LostCommissions" element={<LostCommissions />} />
         <Route
           path="/Payment/ClassifyInvoices"
           element={<ClassifyInvoices />}
