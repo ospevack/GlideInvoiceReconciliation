@@ -213,6 +213,9 @@ export default function PaymentSheet() {
                     <td>Disb/Adjustments</td>
                     <td>Adhoc</td>
                     <td>Adhoc only inv</td>
+                    <td>Description</td>
+                    <td>Adj/Exclusion reason</td>
+                    <td>Adhoc Desc</td>
                   </tr>
                 </thead>
                 <tbody>
@@ -396,6 +399,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/* Invoice */}
                                 {item.clas_status == "include" ||
                                 (item.clas_status == "adhoc" &&
                                   item.cancelled != 1 &&
@@ -419,6 +423,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/* Disb/Adjustments */}
                                 {item.clas_status == "include" &&
                                 item.cancelled != 1 &&
                                 item.CalcGroup == null
@@ -436,38 +441,50 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/* Adhoc */}
                                 {item.clas_status == "include" &&
                                 item.cancelled != 1 &&
                                 item.CalcGroup == null
                                   ? formatCurrency.format(+item.adhoc_amount)
                                   : null}
                               </td>
-                              <td>
-                                <td
-                                  data-t="n"
-                                  data-z="#,##0.00;(#,##0.00);0"
-                                  data-v={
-                                    item.clas_status == "adhoc" &&
-                                    item.cancelled != 1 &&
-                                    item.CalcGroup == null
-                                      ? +item.Fees +
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00;(#,##0.00);0"
+                                data-v={
+                                  item.clas_status == "adhoc" &&
+                                  item.cancelled != 1 &&
+                                  item.CalcGroup == null
+                                    ? +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
+                                    : 0
+                                }
+                              >
+                                {/* Adhoc only inv */}
+                                {item.clas_status == "adhoc" &&
+                                item.cancelled != 1 &&
+                                item.CalcGroup == null
+                                  ? formatCurrency.format(
+                                      +item.Fees +
                                         +item.disb +
                                         +item.adjustment +
                                         +item.adjusting_amount
-                                      : 0
-                                  }
-                                >
-                                  {item.clas_status == "adhoc" &&
-                                  item.cancelled != 1 &&
-                                  item.CalcGroup == null
-                                    ? formatCurrency.format(
-                                        +item.Fees +
-                                          +item.disb +
-                                          +item.adjustment +
-                                          +item.adjusting_amount
-                                      )
-                                    : null}
-                                </td>
+                                    )
+                                  : null}
+                              </td>
+                              <td>
+                                {/*Description*/}
+                                {item.clas_description}
+                              </td>
+                              <td>
+                                {/*Adj reason*/}
+                                {item.clas_reason}
+                              </td>
+                              <td>
+                                {/*Adhoc*/}
+                                {item.adhoc_reason}
                               </td>
                             </tr>
                           ))}

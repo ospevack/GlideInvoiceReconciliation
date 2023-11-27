@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { Nango } from "@nangohq/node";
 import querystring from "querystring";
+import axios from "axios";
 import mysql2 from "mysql2";
 import fs from "fs";
 import path from "path";
@@ -9,6 +10,9 @@ import { fileURLToPath } from "url";
 import bodyParser from "body-parser";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const glideBaseUri = "https://www.whatsglide.com/i/api/api.php";
+const glideApiKey =
+  "c71472ab7325584f331e66f092359f140f010c717af3f7dc1e4dd4c31f531f49";
 
 const connection = mysql2.createConnection({
   host: "ham-ospmtools.mysql.database.azure.com",
@@ -301,6 +305,93 @@ app.put("/payment/togglecheck/:id", async (req, res, next) => {
       res.send(results);
     }
   );
+});
+
+app.get("/glide/clients", async (req, res, next) => {
+  try {
+    axios
+      .get(`${glideBaseUri}/clients/list`, {
+        params: {
+          key: glideApiKey,
+          returnFormat: 1,
+        },
+      })
+      .then((response) => {
+        res.send(JSON.parse(JSON.stringify(response.data).replace("{}", '""')));
+      });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/glide/clients/sync", async (req, res, next) => {
+  //get prev partner
+  var prevPartner = null;
+  axios
+    .get(`${glideBaseUri}/clients/${req.body.glideId}/get/822`, {
+      params: {
+        key: glideApiKey,
+        returnFormat: 1,
+      },
+    })
+    .then((response) => {
+      prevPartner = JSON.parse(
+        JSON.stringify(response.data).replace("{}", '""')
+      ).Data;
+      console.log(prevPartner);
+      connection.query(
+        "UPDATE clients t set t.glideId = ?, t.partner=? WHERE t.id = ?",
+        [req.body.glideId, prevPartner == -1 ? null : prevPartner, req.body.id],
+        function (err, results, fields) {
+          if (err) throw err;
+          res.send(results);
+        }
+      );
+    });
+});
+
+app.post("/glide/clients/:id/prevPartner", async (req, res, next) => {
+  connection.query(
+    "UPDATE clients t set t.partner = ? WHERE t.id = ?",
+    [req.body.partner, req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
+app.get("/glide/users", async (req, res, next) => {
+  try {
+    axios
+      .get(`${glideBaseUri}/users/list`, {
+        params: {
+          key: glideApiKey,
+          returnFormat: 1,
+        },
+      })
+      .then((response) => {
+        res.send(JSON.parse(JSON.stringify(response.data).replace("{}", '""')));
+      });
+  } catch (error) {
+    next(error);
+  }
+});
+app.get("/glide/clients/:id/field/:fid", async (req, res, next) => {
+  try {
+    axios
+      .get(`${glideBaseUri}/clients/${req.params.id}/get/${req.params.fid}`, {
+        params: {
+          key: glideApiKey,
+          returnFormat: 1,
+        },
+      })
+      .then((response) => {
+        res.send(JSON.parse(JSON.stringify(response.data).replace("{}", '""')));
+      });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.listen(5678, () => {

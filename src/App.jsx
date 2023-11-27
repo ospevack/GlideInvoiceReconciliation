@@ -11,6 +11,7 @@ import PaymentSheet from "./routes/Payment/Sheet.jsx";
 import ClassifyClients from "./routes/Payment/ClassifyClient.jsx";
 import ClassifyInvoices from "./routes/Payment/ClassifyInvoice.jsx";
 import PaymentSummary from "./routes/Payment/Summary.jsx";
+import GlideSync from "./routes/Clients/GlideSyncList.jsx";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/Daybooks/Excel" element={<DaybookExcelShow />} />
         <Route path="/Clients/list" element={<ClientList />} />
         <Route path="/Clients/XeroSync" element={<XeroSync />} />
+        <Route path="/Clients/GlideSync" element={<GlideSync />} />
         <Route path="/Payment/Sheet" element={<PaymentSheet />} />
         <Route path="/Payment/ClassifyClients" element={<ClassifyClients />} />
         <Route

@@ -12,6 +12,12 @@ export default function ClientsSubNav({ PageName }) {
       href: "/Clients/XeroSync",
       current: PageName === "XeroSync",
     },
+    {
+      id: 3,
+      name: "Glide Sync",
+      href: "/Clients/GlideSync",
+      current: PageName === "GlideSync",
+    },
   ];
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");
