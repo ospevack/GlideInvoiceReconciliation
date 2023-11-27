@@ -228,13 +228,17 @@ export default function PaymentSheet() {
                           .filter((x) => x.xeroClientId === client)
                           .map((item) => (
                             <tr>
-                              <td></td>
+                              <td>{/*Client Name */}</td>
                               <td>
+                                {/*Date */}
                                 {new Date(item.date).toLocaleDateString(
                                   "en-GB"
                                 )}
                               </td>
-                              <td>{item.number}</td>
+                              <td>
+                                {/*invoice number*/}
+                                {item.number}
+                              </td>
                               <td
                                 data-t="n"
                                 data-z="#,##0.00;(#,##0.00);0"
@@ -245,6 +249,7 @@ export default function PaymentSheet() {
                                   +item.adjusting_amount
                                 }
                               >
+                                {/*invoice total*/}
                                 {formatCurrency.format(
                                   +item.Fees +
                                     +item.disb +
@@ -252,7 +257,7 @@ export default function PaymentSheet() {
                                     +item.adjusting_amount
                                 )}
                               </td>
-                              <td></td>
+                              <td>{/*client total*/}</td>
                               <td
                                 data-t="n"
                                 data-z="#,##0.00;(#,##0.00);0"
@@ -266,6 +271,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/*Cancelled*/}
                                 {item.cancelled == 1 &&
                                   formatCurrency.format(
                                     (+item.Fees +
@@ -288,6 +294,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/*Lost*/}
                                 {item.CalcGroup == "Lost"
                                   ? formatCurrency.format(
                                       (+item.Fees +
@@ -311,6 +318,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/*OSA*/}
                                 {item.CalcGroup == "OSA"
                                   ? formatCurrency.format(
                                       (+item.Fees +
@@ -334,6 +342,7 @@ export default function PaymentSheet() {
                                     : 0
                                 }
                               >
+                                {/*New-Ltd*/}
                                 {item.CalcGroup == "New-Ltd"
                                   ? formatCurrency.format(
                                       (+item.Fees +
@@ -350,24 +359,25 @@ export default function PaymentSheet() {
                                 data-v={
                                   checkExcludeStatus(item.clas_status) &&
                                   item.cancelled != 1 &&
-                                  item.CalcGroup == null
-                                    ? (+item.Fees +
-                                        +item.disb +
-                                        +item.adjustment +
-                                        +item.adjusting_amount) /
-                                      -1
+                                  (item.CalcGroup == null ||
+                                    item.CalcGroup == "New-Referral")
+                                    ? +item.Fees +
+                                      +item.disb +
+                                      +item.adjustment +
+                                      +item.adjusting_amount
                                     : 0
                                 }
                               >
+                                {/*Excluded/Superceded Inv*/}
                                 {checkExcludeStatus(item.clas_status) &&
                                 item.cancelled != 1 &&
-                                item.CalcGroup == null
+                                (item.CalcGroup == null ||
+                                  item.CalcGroup == "New-Referral")
                                   ? formatCurrency.format(
-                                      (+item.Fees +
+                                      +item.Fees +
                                         +item.disb +
                                         +item.adjustment +
-                                        +item.adjusting_amount) /
-                                        -1
+                                        +item.adjusting_amount
                                     )
                                   : null}
                               </td>
@@ -375,10 +385,10 @@ export default function PaymentSheet() {
                                 data-t="n"
                                 data-z="#,##0.00;(#,##0.00);0"
                                 data-v={
-                                  item.clas_status == "include" ||
-                                  (item.clas_status == "adhoc" &&
-                                    item.cancelled != 1 &&
-                                    item.CalcGroup == null)
+                                  !checkExcludeStatus(item.clas_status) &&
+                                  item.cancelled != 1 &&
+                                  (item.CalcGroup == null ||
+                                    item.CalcGroup == "New-Referral")
                                     ? +item.Fees +
                                       +item.disb +
                                       +item.adjustment +
@@ -692,7 +702,8 @@ export default function PaymentSheet() {
                           (x) =>
                             checkExcludeStatus(x.clas_status) &&
                             x.cancelled != 1 &&
-                            x.CalcGroup == null
+                            (x.CalcGroup == null ||
+                              x.CalcGroup == "New-Referral")
                         )
                         .reduce((total, invoice) => {
                           return (
@@ -704,6 +715,7 @@ export default function PaymentSheet() {
                           );
                         }, 0)}
                     >
+                      {/*Excluded/Superceded Inv*/}
                       {formatCurrency.format(
                         daybook
                           .filter((x) =>
@@ -713,7 +725,8 @@ export default function PaymentSheet() {
                             (x) =>
                               checkExcludeStatus(x.clas_status) &&
                               x.cancelled != 1 &&
-                              x.CalcGroup == null
+                              (x.CalcGroup == null ||
+                                x.CalcGroup == "New-Referral")
                           )
                           .reduce((total, invoice) => {
                             return (
