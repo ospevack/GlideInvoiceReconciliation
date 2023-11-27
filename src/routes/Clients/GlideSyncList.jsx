@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import ClientsSubNav from "../../components/ClientsSubNav";
 import { Switch } from "@headlessui/react";
+import ManualGlide from "./Component-ManualGlide";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -66,6 +67,29 @@ export default function GlideSync() {
           setClients(
             clients.map((c) => {
               if (c.id == client.id) {
+                c.glideId = glideId;
+              }
+              return c;
+            })
+          );
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  function updateClient(clientId, glideId, userId) {
+    axios
+      .post(`/api/glide/clients/${clientId}/manual`, {
+        glideId: glideId,
+        partner: userId,
+      })
+      .then((response) => {
+        if (response.data.affectedRows == 1 && response.data.changedRows == 1) {
+          setClients(
+            clients.map((c) => {
+              if (c.id == clientId) {
                 c.glideId = glideId;
               }
               return c;
@@ -190,27 +214,11 @@ export default function GlideSync() {
                                 Sync
                               </button>
                             ) : (
-                              <div className="flex flex-inline">
-                                <div>
-                                  <input
-                                    type="text"
-                                    placeholder="Glide ID"
-                                  ></input>
-                                </div>
-                                <div>
-                                  <select>
-                                    {glideUserList.map((user) => (
-                                      <>
-                                        {user.Role.startsWith("Partner") && (
-                                          <option value={user.id}>
-                                            {user.Initials}
-                                          </option>
-                                        )}
-                                      </>
-                                    ))}
-                                  </select>
-                                </div>
-                              </div>
+                              <ManualGlide
+                                client={client}
+                                setClientInfo={updateClient}
+                                glideUserList={glideUserList}
+                              />
                             )}
                           </td>
                         </tr>

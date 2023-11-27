@@ -350,6 +350,17 @@ app.post("/glide/clients/sync", async (req, res, next) => {
     });
 });
 
+app.post("/glide/clients/:id/manual", async (req, res, next) => {
+  connection.query(
+    "UPDATE clients t set t.glideId = ?, t.partner = ? WHERE t.id = ?",
+    [req.body.glideId, req.body.partner, req.params.id],
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.post("/glide/clients/:id/prevPartner", async (req, res, next) => {
   connection.query(
     "UPDATE clients t set t.partner = ? WHERE t.id = ?",
