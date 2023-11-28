@@ -34,15 +34,15 @@ export default function LostCommissions() {
   }, [daybook]);
 
   useEffect(() => {
-    setUniqueClients(
-      lostCommissions.reduce((acc, item) => {
-        if (!acc.includes(item.name)) {
-          acc.push(item);
-        }
-        return acc;
-      }, [])
-    );
+    //console.log([...new Set(lostCommissions.map((item) => item.client_id))]);
+    setUniqueClients([
+      ...new Set(lostCommissions.map((item) => item.client_id)),
+    ]);
   }, [lostCommissions]);
+
+  // useEffect(() => {
+  //   console.log(uniqueClients.map((item) => item));
+  // }, [uniqueClients]);
 
   return (
     <div className="min-h-full">
@@ -79,66 +79,200 @@ export default function LostCommissions() {
             >
               <thead>
                 <tr>
+                  <td></td>
                   <td>Date</td>
                   <td>Inv. No</td>
                   <td>Fee</td>
                   <td>Adjustments</td>
                   <td>Net</td>
+                  <td></td>
                   <td>15%</td>
+                  <td></td>
                 </tr>
               </thead>
               <tbody>
-                {uniqueClients.map((item, index) => (
-                  <>
-                    <tr className="text-lg text-bold border-t-2 border-indigo-600">
-                      <td colspan={4}>{item.name}</td>
-                    </tr>
-                    {lostCommissions
-                      .filter((i) => i.client_id == item.client_id)
-                      .map((i) => (
-                        <tr>
-                          <td>
-                            {new Date(i.date).toLocaleDateString("en-GB")}
-                          </td>
-                          <td>{i.number}</td>
-                          <td>{formatCurrency.format(+i.Fees)}</td>
-                          <td>
-                            {formatCurrency.format(
-                              +i.adjustment + +i.adjusting_amount
+                {uniqueClients.length > 0 &&
+                  uniqueClients.map((item) => (
+                    <>
+                      <tr className="text-lg text-bold border-t-2 border-indigo-600">
+                        <td colspan={9}>
+                          {
+                            lostCommissions.find((x) => x.client_id == item)
+                              .name
+                          }
+                          (
+                          {
+                            lostCommissions.find((x) => x.client_id == item)
+                              .AccountNumber
+                          }
+                          )
+                        </td>
+                      </tr>
+                      {lostCommissions
+                        .filter((i) => i.client_id == item)
+                        .map((i) => (
+                          <>
+                            <tr>
+                              <td></td>
+                              <td>
+                                {new Date(i.date).toLocaleDateString("en-GB")}
+                              </td>
+                              <td>{i.number}</td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00 ;(#,##0.00); "
+                                data-v={+i.Fees}
+                              >
+                                {formatCurrency.format(+i.Fees)}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00 ;(#,##0.00); "
+                                data-v={+i.adjustment + +i.adjusting_amount}
+                              >
+                                {formatCurrency.format(
+                                  +i.adjustment + +i.adjusting_amount
+                                )}
+                              </td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00 ;(#,##0.00); "
+                                data-v={
+                                  +i.Fees + +i.adjustment + +i.adjusting_amount
+                                }
+                              >
+                                {formatCurrency.format(
+                                  +i.Fees + +i.adjustment + +i.adjusting_amount
+                                )}
+                              </td>
+                              <td></td>
+                              <td
+                                data-t="n"
+                                data-z="#,##0.00 ;(#,##0.00); "
+                                data-v={
+                                  (+i.Fees +
+                                    +i.adjustment +
+                                    +i.adjusting_amount) *
+                                  0.15
+                                }
+                              >
+                                {formatCurrency.format(
+                                  (+i.Fees +
+                                    +i.adjustment +
+                                    +i.adjusting_amount) *
+                                    0.15
+                                )}
+                              </td>
+                              <td></td>
+                            </tr>
+                          </>
+                        ))}
+                      <tr>
+                        <td colSpan={6}>Client Total</td>
+                        <td
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00); "
+                          data-v={lostCommissions
+
+                            .filter((i) => i.client_id == item)
+                            .reduce(
+                              (acc, item) =>
+                                acc +
+                                +item.Fees +
+                                +item.adjustment +
+                                +item.adjusting_amount,
+                              0
                             )}
-                          </td>
-                          <td>
-                            {formatCurrency.format(
-                              +i.Fees + +i.adjustment + +i.adjusting_amount
+                        >
+                          {formatCurrency.format(
+                            lostCommissions
+
+                              .filter((i) => i.client_id == item)
+                              .reduce(
+                                (acc, item) =>
+                                  acc +
+                                  +item.Fees +
+                                  +item.adjustment +
+                                  +item.adjusting_amount,
+                                0
+                              )
+                          )}
+                        </td>
+                        <td></td>
+                        <td
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00); "
+                          data-v={lostCommissions
+                            .filter((i) => i.client_id == item)
+                            .reduce(
+                              (acc, item) =>
+                                acc +
+                                (+item.Fees +
+                                  +item.adjustment +
+                                  +item.adjusting_amount) *
+                                  0.15,
+                              0
                             )}
-                          </td>
-                          <td>
-                            {formatCurrency.format(
-                              (+i.Fees + +i.adjustment + +i.adjusting_amount) *
-                                0.15
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </>
-                ))}
+                        >
+                          {formatCurrency.format(
+                            lostCommissions
+                              .filter((i) => i.client_id == item)
+                              .reduce(
+                                (acc, item) =>
+                                  acc +
+                                  (+item.Fees +
+                                    +item.adjustment +
+                                    +item.adjusting_amount) *
+                                    0.15,
+                                0
+                              )
+                          )}
+                        </td>
+                      </tr>
+                    </>
+                  ))}
               </tbody>
               <tfoot>
                 <tr className="text-lg text-bold border-t-2 border-indigo-600">
-                  <td colspan={4}>Total</td>
-                  <td>
-                    {formatCurrency.format(
-                      lostCommissions.reduce(
-                        (acc, item) =>
-                          acc +
-                          +item.Fees +
-                          +item.adjustment +
-                          +item.adjusting_amount,
-                        0
-                      )
+                  <td colspan={6}>Total</td>
+                  <td></td>
+
+                  <td
+                    data-t="n"
+                    data-z="#,##0.00 ;(#,##0.00); "
+                    data-v={lostCommissions.reduce(
+                      (acc, item) =>
+                        acc +
+                        +item.Fees +
+                        +item.adjustment +
+                        +item.adjusting_amount,
+                      0
+                    )}
+                  >
+                    {lostCommissions.reduce(
+                      (acc, item) =>
+                        acc +
+                        +item.Fees +
+                        +item.adjustment +
+                        +item.adjusting_amount,
+                      0
                     )}
                   </td>
-                  <td>
+                  <td></td>
+
+                  <td
+                    data-t="n"
+                    data-z="#,##0.00 ;(#,##0.00); "
+                    data-v={lostCommissions.reduce(
+                      (acc, item) =>
+                        acc +
+                        (+item.Fees +
+                          +item.adjustment +
+                          +item.adjusting_amount) *
+                          0.15,
+                      0
+                    )}
+                  >
                     {formatCurrency.format(
                       lostCommissions.reduce(
                         (acc, item) =>

@@ -67,7 +67,7 @@ export default function PaymentSummary() {
       ) / -1
     );
     setCommission(
-      sumInvoices(
+      sumCommissionInvoices(
         daybook.filter(
           (invoice) =>
             invoice.CalcGroup == "Lost" && invoice.clas_status == "15percent"
@@ -137,6 +137,18 @@ export default function PaymentSummary() {
       );
     }, 0);
   }
+
+  function sumCommissionInvoices(invoices) {
+    return invoices.reduce((total, invoice) => {
+      /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+      return (
+        total + +invoice.Fees + +invoice.adjustment + +invoice.adjusting_amount
+      );
+    }, 0);
+  }
+
   function sumAdhoc(invoices) {
     return invoices.reduce((total, invoice) => {
       /*return total + invoices.adjusting_document == "daybook"
