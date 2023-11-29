@@ -253,13 +253,24 @@ app.get("/payment/all", async (req, res, next) => {
   connection.query(
     //"select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
     //"select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner) partner,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
-    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner, '100010') partner,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id left outer join salesrec.original_partners i on c.AccountNumber = i.code",
+    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner, '100010') partner, p.id adj_id,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id left outer join salesrec.original_partners i on c.AccountNumber = i.code",
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);
     }
   );
 });
+
+app.get("/payment/hfs", async (req, res, next) => {
+  connection.query(
+    "select daybook.* from (select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup,COALESCE(i.GlideUserId, partner, '100010') as partner,p.id adj_id,adj_amount clas_amount,adj_reason clas_reason,status clas_status,adhoc_amount,adhoc_reason,Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id left outer join salesrec.original_partners i on c.AccountNumber = i.code) as daybook join hfs_shared h on daybook.client_id = h.client_id",
+    function (err, results, fields) {
+      if (err) throw err;
+      res.send(results);
+    }
+  );
+});
+
 app.get("/payment/transactions", async (req, res, next) => {
   connection.query(
     "select * from payment_transactions",

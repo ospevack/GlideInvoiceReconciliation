@@ -364,7 +364,8 @@ export default function ClassifyInvoices() {
                                       href={`https://go.xero.com/app/!Pb2XD/invoicing/view/${item.xeroInvoiceId}`}
                                       target="_blank"
                                     >
-                                      {item.number}
+                                      {item.number}{" "}
+                                      {item.adj_id ? `(${item.adj_id})` : null}
                                     </a>
                                   </td>
                                   <td

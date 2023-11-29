@@ -6,13 +6,12 @@ import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
 import FilterCalcGroups from "./Filter-CalcGroups";
 import FilterPartners from "./Filter-Partners";
-import { Switch } from "@headlessui/react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function PaymentSheet() {
+export default function HFSShared() {
   const formatCurrency = new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
@@ -26,11 +25,10 @@ export default function PaymentSheet() {
   const sheetTable = useRef(null);
   const [selectedPartners, setSelectedPartners] = useState([]);
   const [partners, setPartners] = useState([]);
-  const [includedOnly, setIncludedOnly] = useState(false);
 
   useEffect(() => {
     axios
-      .get("/api/payment/all")
+      .get("/api/payment/hfs")
       .then((res) => {
         setDaybook(res.data);
       })
@@ -127,19 +125,19 @@ export default function PaymentSheet() {
     <>
       <div className="min-h-full">
         <Navbar PageName="Payment" />
-        <PaymentSubNav PageName={"Sheet"} />
+        <PaymentSubNav PageName={"HFSShared"} />
         <div className="py-10">
           <header>
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-                Payment Sheet{" "}
+                HFS Shared{" "}
                 <button
                   className="ml-4 inline-flex items-center gap-x-1.5 rounded-md bg-white px-2 py-1 text-xs font-semibold text-indigo-400 shadow-sm ring-1 ring-inset ring-indigo-400 hover:text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   onClick={() => {
                     // generate workbook from table element
                     const wb = utils.table_to_book(sheetTable.current);
                     // write to XLSX
-                    writeFileXLSX(wb, "DaybookInvoices.xlsx");
+                    writeFileXLSX(wb, "HFSShared.xlsx");
                   }}
                 >
                   Export XLSX
@@ -209,35 +207,6 @@ export default function PaymentSheet() {
                         </button>
                       </span>
                     </span>
-                  </span>
-                  <span className="px-2">
-                    <Switch.Group
-                      as="div"
-                      className="ml-auto text-sm flex items-center py-2"
-                    >
-                      <Switch
-                        checked={includedOnly}
-                        onChange={() => setIncludedOnly(!includedOnly)}
-                        className={classNames(
-                          includedOnly ? "bg-indigo-600" : "bg-gray-200",
-                          "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-                        )}
-                      >
-                        <span className="sr-only">More/Less than</span>
-                        <span
-                          aria-hidden="true"
-                          className={classNames(
-                            includedOnly ? "translate-x-5" : "translate-x-0",
-                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                          )}
-                        />
-                      </Switch>
-                      <Switch.Label as="span" className="ml-3 text-sm">
-                        <span className="font-sm text-gray-900">
-                          Included only
-                        </span>
-                      </Switch.Label>
-                    </Switch.Group>
                   </span>
                 </div>
               </div>
@@ -336,16 +305,7 @@ export default function PaymentSheet() {
                           </td>
                         </tr>
                         {daybook
-                          .filter(
-                            (x) =>
-                              x.xeroClientId === client &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
-                          )
+                          .filter((x) => x.xeroClientId === client)
                           .map((item) => (
                             <tr>
                               <td>{/*Client Name */}</td>
@@ -357,7 +317,7 @@ export default function PaymentSheet() {
                               </td>
                               <td>
                                 {/*invoice number*/}
-                                {item.number} {item.Id ? `(${item.Id})` : null}
+                                {item.number} ({item.Id})
                               </td>
                               <td
                                 data-t="n"
@@ -687,30 +647,12 @@ export default function PaymentSheet() {
                             data-t="n"
                             data-z="#,##0.00;(#,##0.00);0"
                             data-v={sumInvoices(
-                              daybook.filter(
-                                (x) =>
-                                  x.xeroClientId === client &&
-                                  (includedOnly
-                                    ? x.clas_status == "include" ||
-                                      (x.clas_status == "adhoc" &&
-                                        x.cancelled != 1 &&
-                                        x.CalcGroup == null)
-                                    : true)
-                              )
+                              daybook.filter((x) => x.xeroClientId === client)
                             )}
                           >
                             {formatCurrency.format(
                               sumInvoices(
-                                daybook.filter(
-                                  (x) =>
-                                    x.xeroClientId === client &&
-                                    (includedOnly
-                                      ? x.clas_status == "include" ||
-                                        (x.clas_status == "adhoc" &&
-                                          x.cancelled != 1 &&
-                                          x.CalcGroup == null)
-                                      : true)
-                                )
+                                daybook.filter((x) => x.xeroClientId === client)
                               )
                             )}
                           </td>
@@ -741,15 +683,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .reduce((total, invoice) => {
                           return (
@@ -763,17 +698,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .reduce((total, invoice) => {
                             return (
@@ -791,17 +717,8 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.cancelled == 1)
                           .reduce((total, invoice) => {
@@ -817,17 +734,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.cancelled == 1)
                           .reduce((total, invoice) => {
@@ -846,17 +754,8 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "Lost")
                           .reduce((total, invoice) => {
@@ -872,17 +771,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "Lost")
                           .reduce((total, invoice) => {
@@ -901,17 +791,8 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "OSA")
                           .reduce((total, invoice) => {
@@ -927,17 +808,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "OSA")
                           .reduce((total, invoice) => {
@@ -956,17 +828,8 @@ export default function PaymentSheet() {
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "New-Ltd")
                           .reduce((total, invoice) => {
@@ -982,17 +845,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter((x) => x.CalcGroup == "New-Ltd")
                           .reduce((total, invoice) => {
@@ -1010,15 +864,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .filter(
                           (x) =>
@@ -1040,17 +887,8 @@ export default function PaymentSheet() {
                       {/*Excluded/Superceded Inv*/}
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter(
                             (x) =>
@@ -1074,15 +912,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .filter(
                           (x) =>
@@ -1103,17 +934,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter(
                             (x) =>
@@ -1137,15 +959,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .filter(
                           (x) =>
@@ -1159,17 +974,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter(
                             (x) =>
@@ -1186,15 +992,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .filter(
                           (x) =>
@@ -1208,17 +1007,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter(
                             (x) =>
@@ -1235,15 +1025,8 @@ export default function PaymentSheet() {
                       data-t="n"
                       data-z="#,##0.00;(#,##0.00);0"
                       data-v={daybook
-                        .filter(
-                          (x) =>
-                            filteredUniqueClientList.includes(x.xeroClientId) &&
-                            (includedOnly
-                              ? x.clas_status == "include" ||
-                                (x.clas_status == "adhoc" &&
-                                  x.cancelled != 1 &&
-                                  x.CalcGroup == null)
-                              : true)
+                        .filter((x) =>
+                          filteredUniqueClientList.includes(x.xeroClientId)
                         )
                         .filter(
                           (x) =>
@@ -1263,17 +1046,8 @@ export default function PaymentSheet() {
                     >
                       {formatCurrency.format(
                         daybook
-                          .filter(
-                            (x) =>
-                              filteredUniqueClientList.includes(
-                                x.xeroClientId
-                              ) &&
-                              (includedOnly
-                                ? x.clas_status == "include" ||
-                                  (x.clas_status == "adhoc" &&
-                                    x.cancelled != 1 &&
-                                    x.CalcGroup == null)
-                                : true)
+                          .filter((x) =>
+                            filteredUniqueClientList.includes(x.xeroClientId)
                           )
                           .filter(
                             (x) =>

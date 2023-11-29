@@ -128,21 +128,33 @@ export default function LostCommissions() {
                               <td
                                 data-t="n"
                                 data-z="#,##0.00 ;(#,##0.00); "
-                                data-v={+i.adjustment + +i.adjusting_amount}
+                                data-v={
+                                  +i.adjustment +
+                                  +i.adjusting_amount +
+                                  +i.clas_amount
+                                }
                               >
                                 {formatCurrency.format(
-                                  +i.adjustment + +i.adjusting_amount
+                                  +i.adjustment +
+                                    +i.adjusting_amount +
+                                    +i.clas_amount
                                 )}
                               </td>
                               <td
                                 data-t="n"
                                 data-z="#,##0.00 ;(#,##0.00); "
                                 data-v={
-                                  +i.Fees + +i.adjustment + +i.adjusting_amount
+                                  +i.Fees +
+                                  +i.adjustment +
+                                  +i.adjusting_amount +
+                                  +i.clas_amount
                                 }
                               >
                                 {formatCurrency.format(
-                                  +i.Fees + +i.adjustment + +i.adjusting_amount
+                                  +i.Fees +
+                                    +i.adjustment +
+                                    +i.adjusting_amount +
+                                    +i.clas_amount
                                 )}
                               </td>
                               <td></td>
@@ -152,14 +164,16 @@ export default function LostCommissions() {
                                 data-v={
                                   (+i.Fees +
                                     +i.adjustment +
-                                    +i.adjusting_amount) *
+                                    +i.adjusting_amount +
+                                    +i.clas_amount) *
                                   0.15
                                 }
                               >
                                 {formatCurrency.format(
                                   (+i.Fees +
                                     +i.adjustment +
-                                    +i.adjusting_amount) *
+                                    +i.adjusting_amount +
+                                    +i.clas_amount) *
                                     0.15
                                 )}
                               </td>

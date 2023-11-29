@@ -165,6 +165,13 @@ export default function PaymentSummary() {
       return total + +invoice.clas_amount;
     }, 0);
   }
+
+  function sumDisbursements(invoices) {
+    return invoices.reduce((total, invoice) => {
+      return total;
+      //TODO
+    });
+  }
   function checkExcludeStatus(status) {
     return status == "include" ? false : status == "adhoc" ? false : true;
   }
@@ -327,6 +334,15 @@ export default function PaymentSummary() {
                     >
                       {formatCurrency.format(+excludedInvs)}
                     </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Less: Disbursements
+                    </td>
+                    <td data-t="n" data-v={+grfAdjustments}>
+                      {formatCurrency.format(+grfAdjustments)}
+                    </td>
+                    <td></td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">

@@ -30,6 +30,12 @@ export default function PaymentSubNav({ PageName }) {
       href: "/Payment/LostCommissions",
       current: PageName === "LostCommissions",
     },
+    {
+      id: 5,
+      name: "HFS Shared",
+      href: "/Payment/HFSShared",
+      current: PageName === "HFSShared",
+    },
   ];
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");
