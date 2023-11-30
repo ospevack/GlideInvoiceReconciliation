@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
+import { Switch } from "@headlessui/react";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -17,7 +18,11 @@ export default function PaymentSummary() {
 
   const [daybook, setDaybook] = useState([]);
   const summaryTable = useRef(null);
-  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [totalInvoices, setTotalInvoices] = useState({
+    total: 0,
+    2022: 0,
+    2023: 0,
+  });
   const [lostClients, setLostClients] = useState(0);
   const [osaClients, setOsaClients] = useState(0);
   const [ltdClients, setLtdClients] = useState(0);
@@ -29,6 +34,9 @@ export default function PaymentSummary() {
   const [adhocTotal, setAdhocTotal] = useState(0);
   const [grfTotal, setGrfTotal] = useState(0);
   const [grfAdjustments, setGrfAdjustments] = useState(0);
+  const [disbursements, setDisbursements] = useState(0);
+  const [cancelled, setCancelled] = useState(0);
+  const [removeAdhoc, setRemoveAdhoc] = useState(false);
 
   useEffect(() => {
     axios
@@ -47,14 +55,22 @@ export default function PaymentSummary() {
   useEffect(() => {
     setTotalInvoices(sumInvoices(daybook));
     setLostClients(
-      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "Lost")) / -1
+      sumInvoices(
+        daybook.filter((invoice) => invoice.CalcGroup == "Lost"),
+        true
+      )
     );
     setOsaClients(
-      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "OSA")) / -1
+      sumInvoices(
+        daybook.filter((invoice) => invoice.CalcGroup == "OSA"),
+        true
+      )
     );
     setLtdClients(
-      sumInvoices(daybook.filter((invoice) => invoice.CalcGroup == "New-Ltd")) /
-        -1
+      sumInvoices(
+        daybook.filter((invoice) => invoice.CalcGroup == "New-Ltd"),
+        true
+      )
     );
     setExcludedInvs(
       sumInvoices(
@@ -62,58 +78,171 @@ export default function PaymentSummary() {
           (invoice) =>
             checkExcludeStatus(invoice.clas_status) &&
             invoice.cancelled != 1 &&
-            invoice.CalcGroup == null
-        )
-      ) / -1
+            (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+        ),
+        true
+      )
     );
     setCommission(
       sumCommissionInvoices(
         daybook.filter(
           (invoice) =>
             invoice.CalcGroup == "Lost" && invoice.clas_status == "15percent"
-        )
-      ) * 0.15
+        ),
+        0.15
+      )
+    );
+    setCancelled(
+      sumInvoices(
+        daybook.filter((invoice) => invoice.cancelled == 1),
+        true
+      )
     );
   }, [daybook]);
   useEffect(() => {
-    setTotal(
-      +totalInvoices + +lostClients + +osaClients + +ltdClients + +excludedInvs
-    );
-  }, [totalInvoices, lostClients, osaClients, ltdClients, excludedInvs]);
+    setTotal({
+      total: removeAdhoc
+        ? +totalInvoices.total +
+          +lostClients.total +
+          +osaClients.total +
+          +ltdClients.total +
+          +excludedInvs.total +
+          +cancelled.total +
+          +adhocTotal.total * -1 +
+          disbursements.total
+        : +totalInvoices.total +
+          +lostClients.total +
+          +osaClients.total +
+          +ltdClients.total +
+          +excludedInvs.total +
+          +cancelled.total +
+          disbursements.total,
+      2022: removeAdhoc
+        ? +totalInvoices["2022"] +
+          +lostClients["2022"] +
+          +osaClients["2022"] +
+          +ltdClients["2022"] +
+          +excludedInvs["2022"] +
+          +cancelled["2022"] +
+          +adhocTotal["2022"] * -1 +
+          disbursements["2022"]
+        : +totalInvoices["2022"] +
+          +lostClients["2022"] +
+          +osaClients["2022"] +
+          +ltdClients["2022"] +
+          +excludedInvs["2022"] +
+          +cancelled["2022"] +
+          disbursements["2022"],
+      2023: removeAdhoc
+        ? +totalInvoices["2023"] +
+          +lostClients["2023"] +
+          +osaClients["2023"] +
+          +ltdClients["2023"] +
+          +excludedInvs["2023"] +
+          +cancelled["2023"] +
+          +adhocTotal["2023"] * -1 +
+          disbursements["2023"]
+        : +totalInvoices["2023"] +
+          +lostClients["2023"] +
+          +osaClients["2023"] +
+          +ltdClients["2023"] +
+          +excludedInvs["2023"] +
+          +cancelled["2023"] +
+          disbursements["2023"],
+    });
+  }, [
+    totalInvoices,
+    lostClients,
+    osaClients,
+    ltdClients,
+    excludedInvs,
+    disbursements,
+    removeAdhoc,
+  ]);
   useEffect(() => {
-    setAdhocTotal(
-      sumInvoices(
-        daybook.filter(
-          (invoice) =>
-            invoice.clas_status == "adhoc" &&
-            invoice.cancelled != 1 &&
-            invoice.CalcGroup == null
-        )
-      ) +
+    setAdhocTotal({
+      total:
+        sumInvoices(
+          daybook.filter(
+            (invoice) =>
+              invoice.clas_status == "adhoc" &&
+              invoice.cancelled != 1 &&
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+          )
+        ).total +
         sumAdhoc(
           daybook.filter(
             (invoice) =>
               invoice.adhoc_amount != null &&
               invoice.cancelled != 1 &&
-              invoice.CalcGroup == null
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
           )
-        )
-    );
+        ).total,
+      2022:
+        +sumInvoices(
+          daybook.filter(
+            (invoice) =>
+              invoice.clas_status == "adhoc" &&
+              invoice.cancelled != 1 &&
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+          )
+        )["2022"] +
+        +sumAdhoc(
+          daybook.filter(
+            (invoice) =>
+              invoice.adhoc_amount != null &&
+              invoice.cancelled != 1 &&
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+          )
+        )["2022"],
+      2023:
+        sumInvoices(
+          daybook.filter(
+            (invoice) =>
+              invoice.clas_status == "adhoc" &&
+              invoice.cancelled != 1 &&
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+          )
+        )["2023"] +
+        sumAdhoc(
+          daybook.filter(
+            (invoice) =>
+              invoice.adhoc_amount != null &&
+              invoice.cancelled != 1 &&
+              (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+          )
+        )["2023"],
+    });
+
     setGrfAdjustments(
       sumGRFAdjustments(
         daybook.filter(
           (invoice) =>
             invoice.clas_amount != null &&
             invoice.cancelled != 1 &&
-            invoice.CalcGroup == null
+            (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
+        )
+      )
+    );
+    setDisbursements(
+      sumDisbursements(
+        daybook.filter(
+          (invoice) =>
+            invoice.clas_amount != null &&
+            invoice.cancelled != 1 &&
+            (invoice.CalcGroup == null || invoice.CalcGroup == "New-Referral")
         )
       )
     );
   }, [daybook]);
 
   useEffect(() => {
-    setGrfTotal(+total + grfAdjustments + adhocTotal);
-  }, [total, grfAdjustments, adhocTotal]);
+    setGrfTotal({
+      total: removeAdhoc ? +total.total : +total.total - adhocTotal.total,
+      2022: removeAdhoc ? +total["2022"] : +total["2022"] - adhocTotal["2022"],
+      2023: removeAdhoc ? +total["2023"] : +total["2023"] - adhocTotal["2023"],
+    });
+  }, [total, adhocTotal, removeAdhoc]);
 
   useEffect(() => {
     setTotalPayments(
@@ -123,8 +252,26 @@ export default function PaymentSummary() {
     );
   }, [transactions]);
 
-  function sumInvoices(invoices) {
-    return invoices.reduce((total, invoice) => {
+  function checkSheet(sheet) {
+    //console.log(sheet);
+    return sheet == "Nov-21" ||
+      sheet == "Dec-21" ||
+      sheet == "Jan-22" ||
+      sheet == "Feb-22" ||
+      sheet == "mar-22" ||
+      sheet == "Apr-22" ||
+      sheet == "May-22" ||
+      sheet == "Jun-22" ||
+      sheet == "Jul-22" ||
+      sheet == "Aug-22" ||
+      sheet == "Sept-22" ||
+      sheet == "Oct-22"
+      ? "2022"
+      : "2023";
+  }
+
+  function sumInvoices(invoices, negate = false) {
+    var total = invoices.reduce((total, invoice) => {
       /*return total + invoices.adjusting_document == "daybook"
         ? +invoice.adjusting_amount
         : +invoice.adjusting_amount / -1;*/
@@ -136,10 +283,42 @@ export default function PaymentSummary() {
         +invoice.adjusting_amount
       );
     }, 0);
+    var p22 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2022")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return (
+          total +
+          +invoice.Fees +
+          +invoice.disb +
+          +invoice.adjustment +
+          +invoice.adjusting_amount
+        );
+      }, 0);
+    var p23 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2023")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return (
+          total +
+          +invoice.Fees +
+          +invoice.disb +
+          +invoice.adjustment +
+          +invoice.adjusting_amount
+        );
+      }, 0);
+
+    return negate
+      ? { total: +total / -1, 2022: +p22 / -1, 2023: +p23 / -1 }
+      : { total: +total, 2022: +p22, 2023: +p23 };
   }
 
-  function sumCommissionInvoices(invoices) {
-    return invoices.reduce((total, invoice) => {
+  function sumCommissionInvoices(invoices, percentage) {
+    var total = invoices.reduce((total, invoice) => {
       /*return total + invoices.adjusting_document == "daybook"
         ? +invoice.adjusting_amount
         : +invoice.adjusting_amount / -1;*/
@@ -147,30 +326,106 @@ export default function PaymentSummary() {
         total + +invoice.Fees + +invoice.adjustment + +invoice.adjusting_amount
       );
     }, 0);
+    var p22 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2022")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return (
+          total +
+          +invoice.Fees +
+          +invoice.adjustment +
+          +invoice.adjusting_amount
+        );
+      }, 0);
+    var p23 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2023")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return (
+          total +
+          +invoice.Fees +
+          +invoice.adjustment +
+          +invoice.adjusting_amount
+        );
+      }, 0);
+
+    return {
+      total: total * percentage,
+      2022: p22 * percentage,
+      2023: p23 * percentage,
+    };
   }
 
   function sumAdhoc(invoices) {
-    return invoices.reduce((total, invoice) => {
+    var total = invoices.reduce((total, invoice) => {
       /*return total + invoices.adjusting_document == "daybook"
         ? +invoice.adjusting_amount
         : +invoice.adjusting_amount / -1;*/
       return total + +invoice.adhoc_amount;
     }, 0);
+    var p22 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2022")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return total + +invoice.adhoc_amount;
+      }, 0);
+    var p23 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2023")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return total + +invoice.adhoc_amount;
+      }, 0);
+    return { total: total, 2022: p22, 2023: p23 };
   }
   function sumGRFAdjustments(invoices) {
-    return invoices.reduce((total, invoice) => {
+    var total = invoices.reduce((total, invoice) => {
       /*return total + invoices.adjusting_document == "daybook"
         ? +invoice.adjusting_amount
         : +invoice.adjusting_amount / -1;*/
-      return total + +invoice.clas_amount;
+      return total - +invoice.clas_amount - +invoice.adhoc_amount;
     }, 0);
+    var p22 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2022")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return total - +invoice.clas_amount - +invoice.adhoc_amount;
+      }, 0);
+    var p23 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2023")
+      .reduce((total, invoice) => {
+        /*return total + invoices.adjusting_document == "daybook"
+        ? +invoice.adjusting_amount
+        : +invoice.adjusting_amount / -1;*/
+        return total - +invoice.clas_amount - +invoice.adhoc_amount;
+      }, 0);
+    return { total: total, 2023: p22, 2023: p23 };
   }
 
   function sumDisbursements(invoices) {
-    return invoices.reduce((total, invoice) => {
-      return total;
-      //TODO
-    });
+    var total = invoices.reduce((total, invoice) => {
+      return total + +invoice.clas_amount + +invoice.adhoc_amount;
+    }, 0);
+    var p22 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2022")
+      .reduce((total, invoice) => {
+        return total + +invoice.clas_amount + +invoice.adhoc_amount;
+      }, 0);
+    var p23 = invoices
+      .filter((x) => checkSheet(x.sheet) == "2023")
+      .reduce((total, invoice) => {
+        return total + +invoice.clas_amount + +invoice.adhoc_amount;
+      }, 0);
+    return { total: total, 2022: p22, 2023: p23 };
   }
   function checkExcludeStatus(status) {
     return status == "include" ? false : status == "adhoc" ? false : true;
@@ -192,7 +447,7 @@ export default function PaymentSummary() {
                     // generate workbook from table element
                     const wb = utils.table_to_book(summaryTable.current);
                     // write to XLSX
-                    writeFileXLSX(wb, "DaybookInvoices.xlsx");
+                    writeFileXLSX(wb, "PaymentSummary.xlsx");
                   }}
                 >
                   Export XLSX
@@ -201,6 +456,31 @@ export default function PaymentSummary() {
                     aria-hidden="true"
                   />
                 </button>
+                <Switch.Group
+                  as="div"
+                  className="ml-auto text-sm flex items-center py-2"
+                >
+                  <Switch
+                    checked={removeAdhoc}
+                    onChange={() => setRemoveAdhoc(!removeAdhoc)}
+                    className={classNames(
+                      removeAdhoc ? "bg-indigo-600" : "bg-gray-200",
+                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    )}
+                  >
+                    <span className="sr-only">Remove Adhoc</span>
+                    <span
+                      aria-hidden="true"
+                      className={classNames(
+                        removeAdhoc ? "translate-x-5" : "translate-x-0",
+                        "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                      )}
+                    />
+                  </Switch>
+                  <Switch.Label as="span" className="ml-3 text-sm">
+                    <span className="font-sm text-gray-900">Remove Adhoc</span>
+                  </Switch.Label>
+                </Switch.Group>
               </h1>
             </div>
           </header>
@@ -239,86 +519,275 @@ export default function PaymentSummary() {
                   <tr>
                     <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200"></th>
                     <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
-                      £
+                      2022 £
                     </th>
                     <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
-                      £
+                      2022 £
+                    </th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      2023 £
+                    </th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      2023 £
+                    </th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      Total £
+                    </th>
+                    <th className="w-1/12 px-2 py-2 font-semibold text-gray-900 bg-gray-100 border-b border-gray-200">
+                      Total £
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
+                    {/*Total invoices per Daybook*/}
+
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
-                      Total invoices raised
+                      Total invoices per Daybook
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+totalInvoices}
+                      data-v={+totalInvoices["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(totalInvoices)}
+                      {/*2022*/}
+                      {formatCurrency.format(+totalInvoices["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+totalInvoices["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+totalInvoices["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+totalInvoices.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(totalInvoices.total)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      Less: Cancelled invoices (not sent but left in daybook)
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={+cancelled["2022"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2022*/}
+                      {formatCurrency.format(+cancelled["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+cancelled["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+cancelled["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+cancelled.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(cancelled.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Less: Lost Clients
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+lostClients}
+                      data-v={+lostClients["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(lostClients)}
+                      {/*2022*/}
+                      {formatCurrency.format(+lostClients["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+lostClients["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+lostClients["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+lostClients.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(lostClients.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Less: OSA Clients
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+osaClients}
+                      data-v={+osaClients["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(osaClients)}
+                      {/*2022*/}
+                      {formatCurrency.format(+osaClients["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+osaClients["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+osaClients["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+osaClients.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(osaClients.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Less: New Ltd Co Clients
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+ltdClients}
+                      data-v={+ltdClients["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(ltdClients)}
+                      {/*2022*/}
+                      {formatCurrency.format(+ltdClients["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+ltdClients["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+ltdClients["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+ltdClients.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(ltdClients.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
                       Remaining invoices
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
                       data-v={
-                        +(+totalInvoices) +
-                        +lostClients +
-                        +osaClients +
-                        +ltdClients
+                        +(+totalInvoices["2022"]) +
+                        +lostClients["2022"] +
+                        +osaClients["2022"] +
+                        +ltdClients["2022"]
+                      }
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2022*/}
+                      {formatCurrency.format(
+                        +totalInvoices["2022"] +
+                          +lostClients["2022"] +
+                          +osaClients["2022"] +
+                          +ltdClients["2022"]
+                      )}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={
+                        +(+totalInvoices["2023"]) +
+                        +lostClients["2023"] +
+                        +osaClients["2023"] +
+                        +ltdClients["2023"]
+                      }
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(
+                        +totalInvoices["2023"] +
+                          +lostClients["2023"] +
+                          +osaClients["2023"] +
+                          +ltdClients["2023"]
+                      )}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+ltdClients["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    ></td>
+                    <td
+                      data-t="n"
+                      data-v={
+                        +(+totalInvoices.total) +
+                        +lostClients.total +
+                        +osaClients.total +
+                        +ltdClients.total
                       }
                       className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
                     >
                       {formatCurrency.format(
-                        +totalInvoices +
-                          +lostClients +
-                          +osaClients +
-                          +ltdClients
+                        +totalInvoices.total +
+                          +lostClients.total +
+                          +osaClients.total +
+                          +ltdClients.total
                       )}
                     </td>
                   </tr>
@@ -326,70 +795,249 @@ export default function PaymentSummary() {
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Less: Excluded/Superceded invoices
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+excludedInvs}
+                      data-v={+excludedInvs["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(+excludedInvs)}
+                      {/*2022*/}
+                      {formatCurrency.format(+excludedInvs["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+excludedInvs["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+excludedInvs["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+excludedInvs.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(excludedInvs.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Less: Disbursements
                     </td>
-                    <td data-t="n" data-v={+grfAdjustments}>
-                      {formatCurrency.format(+grfAdjustments)}
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
                     </td>
-                    <td></td>
+                    <td
+                      data-t="n"
+                      data-v={+disbursements["2022"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2022*/}
+                      {formatCurrency.format(+disbursements["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+disbursements["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+disbursements["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+disbursements.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(disbursements.total)}
+                    </td>
                   </tr>
+                  {removeAdhoc && (
+                    <tr>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                        Less: Adhoc greater than £30,000
+                      </td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                        {/*2022*/}
+                      </td>
+                      <td
+                        data-t="n"
+                        data-v={+adhocTotal["2022"]}
+                        className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                      >
+                        {formatCurrency.format(+adhocTotal["2022"] / -1)}
+                      </td>
+
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                        {/*2023*/}
+                      </td>
+                      <td
+                        data-t="n"
+                        data-v={+adhocTotal["2023"]}
+                        className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                      >
+                        {formatCurrency.format(+adhocTotal["2023"] / -1)}
+                      </td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                      <td
+                        data-t="n"
+                        data-v={+adhocTotal.total}
+                        className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                      >
+                        {formatCurrency.format(+adhocTotal.total / -1)}
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
                       Total invoices subject to multiple
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+total}
-                      className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
+                      data-v={+total["2022"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(+total)}
+                      {/*2022*/}
+                      {formatCurrency.format(+total["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+total["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+total["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+total.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(total.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       GRF
                     </td>
-                    <td data-t="n" data-v={+grfTotal}>
-                      {formatCurrency.format(+grfTotal)}
+
+                    <td
+                      data-t="n"
+                      data-v={+grfTotal["2022"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+grfTotal["2022"])}
                     </td>
-                    <td></td>
-                  </tr>
-                  <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
-                      Less: Disbursements & Adhoc
+                      {/*2022*/}
                     </td>
-                    <td data-t="n" data-v={+grfAdjustments}>
-                      {formatCurrency.format(+grfAdjustments)}
+
+                    <td
+                      data-t="n"
+                      data-v={+grfTotal["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+grfTotal["2023"])}
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={+grfTotal.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+grfTotal.total)}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
                   </tr>
+
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Adhoc
                     </td>
-                    <td data-t="n" data-v={+adhocTotal}>
-                      {formatCurrency.format(+adhocTotal)}
+                    <td
+                      data-t="n"
+                      data-v={+adhocTotal["2022"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+adhocTotal["2022"])}
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+adhocTotal["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+adhocTotal["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={+adhocTotal.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(+adhocTotal.total)}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Multiple
                     </td>
-                    <td></td>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2022*/}
+                      1.2
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      1.2
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
                       1.2
                     </td>
                   </tr>
@@ -397,39 +1045,115 @@ export default function PaymentSummary() {
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
                       Sub-Total (multiple applied)
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+total * 1.2}
-                      className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
+                      data-v={+total["2022"] * 1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(+total * 1.2)}
+                      {/*2022*/}
+                      {formatCurrency.format(+total["2022"] * 1.2)}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+total["2023"] * 1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+total["2023"] * 1.2)}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+total.total * 1.2}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(total.total * 1.2)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                       Plus: 15% commission on lost fees serviced more than once
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2022*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+commission}
+                      data-v={+commission["2022"]}
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(+commission)}
+                      {/*2022*/}
+                      {formatCurrency.format(+commission["2022"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+
+                    <td
+                      data-t="n"
+                      data-v={+commission["2023"]}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {/*2023*/}
+                      {formatCurrency.format(+commission["2023"])}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+commission.total}
+                      className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(commission.total)}
                     </td>
                   </tr>
                   <tr>
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
                       Total to pay
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
                     <td
                       data-t="n"
-                      data-v={+total * 1.2 + +commission}
+                      data-v={+total["2022"] * 1.2 + +commission["2022"]}
                       className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
                     >
-                      {formatCurrency.format(+total * 1.2 + +commission)}
+                      {" "}
+                      {/*2022*/}
+                      {formatCurrency.format(
+                        +total["2022"] * 1.2 + +commission["2022"]
+                      )}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
+                      {/*2023*/}
+                    </td>
+                    <td
+                      data-t="n"
+                      data-v={+total["2023"] * 1.2 + +commission["2023"]}
+                      className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
+                    >
+                      {" "}
+                      {/*2023*/}
+                      {formatCurrency.format(
+                        +total["2023"] * 1.2 + +commission["2023"]
+                      )}
+                    </td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td
+                      data-t="n"
+                      data-v={+total.total * 1.2 + +commission.total}
+                      className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
+                    >
+                      {formatCurrency.format(
+                        +total.total * 1.2 + +commission.total
+                      )}
                     </td>
                   </tr>
                   {transactions.map((transaction) => (
@@ -437,7 +1161,11 @@ export default function PaymentSummary() {
                       <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200">
                         Less: {transaction.comment}
                       </td>
-                      <td></td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                      <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
                       <td
                         data-t="n"
                         data-v={+transaction.amount / -1}
@@ -451,14 +1179,20 @@ export default function PaymentSummary() {
                     <td className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200">
                       Remaining final payment
                     </td>
-                    <td></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
+                    <td className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"></td>
                     <td
                       data-t="n"
-                      data-v={+total * 1.2 + +commission - +totalPayments}
+                      data-v={
+                        +total.total * 1.2 + +commission.total - +totalPayments
+                      }
                       className="w-1/12 px-2 py-2 font-semibold text-gray-900 border-b border-gray-200"
                     >
                       {formatCurrency.format(
-                        +total * 1.2 + +commission - +totalPayments
+                        +total.total * 1.2 + +commission.total - +totalPayments
                       )}
                     </td>
                   </tr>

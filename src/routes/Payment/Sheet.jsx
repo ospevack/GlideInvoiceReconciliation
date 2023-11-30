@@ -547,10 +547,10 @@ export default function PaymentSheet() {
                                 }
                               >
                                 {/* Invoice */}
-                                {item.clas_status == "include" ||
-                                (item.clas_status == "adhoc" &&
-                                  item.cancelled != 1 &&
-                                  item.CalcGroup == null)
+                                {!checkExcludeStatus(item.clas_status) &&
+                                item.cancelled != 1 &&
+                                (item.CalcGroup == null ||
+                                  item.CalcGroup == "New-Referral")
                                   ? formatCurrency.format(
                                       +item.Fees +
                                         +item.disb +
@@ -565,7 +565,8 @@ export default function PaymentSheet() {
                                 data-v={
                                   item.clas_status == "include" &&
                                   item.cancelled != 1 &&
-                                  item.CalcGroup == null
+                                  (item.CalcGroup == null ||
+                                    item.CalcGroup == "New-Referral")
                                     ? +item.clas_amount
                                     : 0
                                 }
@@ -573,7 +574,8 @@ export default function PaymentSheet() {
                                 {/* Disb/Adjustments */}
                                 {item.clas_status == "include" &&
                                 item.cancelled != 1 &&
-                                item.CalcGroup == null
+                                (item.CalcGroup == null ||
+                                  item.CalcGroup == "New-Referral")
                                   ? formatCurrency.format(+item.clas_amount)
                                   : null}
                               </td>
@@ -583,7 +585,8 @@ export default function PaymentSheet() {
                                 data-v={
                                   item.clas_status == "include" &&
                                   item.cancelled != 1 &&
-                                  item.CalcGroup == null
+                                  (item.CalcGroup == null ||
+                                    item.CalcGroup == "New-Referral")
                                     ? +item.adhoc_amount
                                     : 0
                                 }
@@ -591,7 +594,8 @@ export default function PaymentSheet() {
                                 {/* Adhoc */}
                                 {item.clas_status == "include" &&
                                 item.cancelled != 1 &&
-                                item.CalcGroup == null
+                                (item.CalcGroup == null ||
+                                  item.CalcGroup == "New-Referral")
                                   ? formatCurrency.format(+item.adhoc_amount)
                                   : null}
                               </td>
@@ -645,7 +649,8 @@ export default function PaymentSheet() {
                                   (item.clas_status == "include" ||
                                     (item.clas_status == "adhoc" &&
                                       item.cancelled != 1 &&
-                                      item.CalcGroup == null))
+                                      item.CalcGroup == null) ||
+                                    item.CalcGroup == "New-Referral")
                                     ? +item.Fees +
                                       +item.disb +
                                       +item.adjustment +
@@ -663,7 +668,8 @@ export default function PaymentSheet() {
                                     {item.clas_status == "include" ||
                                     (item.clas_status == "adhoc" &&
                                       item.cancelled != 1 &&
-                                      item.CalcGroup == null)
+                                      item.CalcGroup == null) ||
+                                    item.CalcGroup == "New-Referral"
                                       ? formatCurrency.format(
                                           +item.Fees +
                                             +item.disb +
@@ -815,6 +821,7 @@ export default function PaymentSheet() {
                           }, 0) / -1
                       }
                     >
+                      {/*Cancelled*/}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -870,6 +877,7 @@ export default function PaymentSheet() {
                           }, 0) / -1
                       }
                     >
+                      {/*Lost*/}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -925,6 +933,7 @@ export default function PaymentSheet() {
                           }, 0) / -1
                       }
                     >
+                      {/*OSA*/}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -980,6 +989,7 @@ export default function PaymentSheet() {
                           }, 0) / -1
                       }
                     >
+                      {/*New-Ltd*/}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -1081,7 +1091,8 @@ export default function PaymentSheet() {
                               ? x.clas_status == "include" ||
                                 (x.clas_status == "adhoc" &&
                                   x.cancelled != 1 &&
-                                  x.CalcGroup == null)
+                                  (x.CalcGroup == null ||
+                                    x.CalcGroup == "New-Referral"))
                               : true)
                         )
                         .filter(
@@ -1089,7 +1100,8 @@ export default function PaymentSheet() {
                             x.clas_status == "include" ||
                             (x.clas_status == "adhoc" &&
                               x.cancelled != 1 &&
-                              x.CalcGroup == null)
+                              (x.CalcGroup == null ||
+                                x.CalcGroup == "New-Referral"))
                         )
                         .reduce((total, invoice) => {
                           return (
@@ -1101,6 +1113,7 @@ export default function PaymentSheet() {
                           );
                         }, 0)}
                     >
+                      {/* Invoice */}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -1112,7 +1125,8 @@ export default function PaymentSheet() {
                                 ? x.clas_status == "include" ||
                                   (x.clas_status == "adhoc" &&
                                     x.cancelled != 1 &&
-                                    x.CalcGroup == null)
+                                    (x.CalcGroup == null ||
+                                      x.CalcGroup == "New-Referral"))
                                 : true)
                           )
                           .filter(
@@ -1120,7 +1134,8 @@ export default function PaymentSheet() {
                               x.clas_status == "include" ||
                               (x.clas_status == "adhoc" &&
                                 x.cancelled != 1 &&
-                                x.CalcGroup == null)
+                                (x.CalcGroup == null ||
+                                  x.CalcGroup == "New-Referral"))
                           )
                           .reduce((total, invoice) => {
                             return (
@@ -1144,19 +1159,22 @@ export default function PaymentSheet() {
                               ? x.clas_status == "include" ||
                                 (x.clas_status == "adhoc" &&
                                   x.cancelled != 1 &&
-                                  x.CalcGroup == null)
+                                  (x.CalcGroup == null ||
+                                    x.CalcGroup == "New-Referral"))
                               : true)
                         )
                         .filter(
                           (x) =>
                             x.clas_status == "include" &&
                             x.cancelled != 1 &&
-                            x.CalcGroup == null
+                            (x.CalcGroup == null ||
+                              x.CalcGroup == "New-Referral")
                         )
                         .reduce((total, invoice) => {
                           return total + +invoice.clas_amount;
                         }, 0)}
                     >
+                      {/* Disb/Adjustments */}
                       {formatCurrency.format(
                         daybook
                           .filter(
@@ -1168,14 +1186,16 @@ export default function PaymentSheet() {
                                 ? x.clas_status == "include" ||
                                   (x.clas_status == "adhoc" &&
                                     x.cancelled != 1 &&
-                                    x.CalcGroup == null)
+                                    (x.CalcGroup == null ||
+                                      x.CalcGroup == "New-Referral"))
                                 : true)
                           )
                           .filter(
                             (x) =>
                               x.clas_status == "include" &&
                               x.cancelled != 1 &&
-                              x.CalcGroup == null
+                              (x.CalcGroup == null ||
+                                x.CalcGroup == "New-Referral")
                           )
                           .reduce((total, invoice) => {
                             return total + +invoice.clas_amount;
@@ -1193,14 +1213,16 @@ export default function PaymentSheet() {
                               ? x.clas_status == "include" ||
                                 (x.clas_status == "adhoc" &&
                                   x.cancelled != 1 &&
-                                  x.CalcGroup == null)
+                                  (x.CalcGroup == null ||
+                                    x.CalcGroup == "New-Referral"))
                               : true)
                         )
                         .filter(
                           (x) =>
                             x.clas_status == "include" &&
                             x.cancelled != 1 &&
-                            x.CalcGroup == null
+                            (x.CalcGroup == null ||
+                              x.CalcGroup == "New-Referral")
                         )
                         .reduce((total, invoice) => {
                           return total + +invoice.adhoc_amount;
@@ -1217,14 +1239,16 @@ export default function PaymentSheet() {
                                 ? x.clas_status == "include" ||
                                   (x.clas_status == "adhoc" &&
                                     x.cancelled != 1 &&
-                                    x.CalcGroup == null)
+                                    x.CalcGroup == null) ||
+                                  x.CalcGroup == "New-Referral"
                                 : true)
                           )
                           .filter(
                             (x) =>
                               x.clas_status == "include" &&
                               x.cancelled != 1 &&
-                              x.CalcGroup == null
+                              (x.CalcGroup == null ||
+                                x.CalcGroup == "New-Referral")
                           )
                           .reduce((total, invoice) => {
                             return total + +invoice.adhoc_amount;
@@ -1242,14 +1266,16 @@ export default function PaymentSheet() {
                               ? x.clas_status == "include" ||
                                 (x.clas_status == "adhoc" &&
                                   x.cancelled != 1 &&
-                                  x.CalcGroup == null)
+                                  (x.CalcGroup == null ||
+                                    x.CalcGroup == "New-Referral"))
                               : true)
                         )
                         .filter(
                           (x) =>
                             x.clas_status == "adhoc" &&
                             x.cancelled != 1 &&
-                            x.CalcGroup == null
+                            (x.CalcGroup == null ||
+                              x.CalcGroup == "New-Referral")
                         )
                         .reduce((total, invoice) => {
                           return (
@@ -1272,14 +1298,16 @@ export default function PaymentSheet() {
                                 ? x.clas_status == "include" ||
                                   (x.clas_status == "adhoc" &&
                                     x.cancelled != 1 &&
-                                    x.CalcGroup == null)
+                                    x.CalcGroup == null) ||
+                                  x.CalcGroup == "New-Referral"
                                 : true)
                           )
                           .filter(
                             (x) =>
                               x.clas_status == "adhoc" &&
                               x.cancelled != 1 &&
-                              x.CalcGroup == null
+                              (x.CalcGroup == null ||
+                                x.CalcGroup == "New-Referral")
                           )
                           .reduce((total, invoice) => {
                             return (
