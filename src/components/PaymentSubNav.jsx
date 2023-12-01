@@ -36,6 +36,12 @@ export default function PaymentSubNav({ PageName }) {
       href: "/Payment/HFSShared",
       current: PageName === "HFSShared",
     },
+    {
+      id: 6,
+      name: "Daybook Format Payment Sheet",
+      href: "/Payment/DaybookFormat",
+      current: PageName === "DaybookFormat",
+    },
   ];
   function classNames(...classes) {
     return classes.filter(Boolean).join(" ");

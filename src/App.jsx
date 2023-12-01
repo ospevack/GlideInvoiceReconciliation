@@ -14,6 +14,7 @@ import PaymentSummary from "./routes/Payment/Summary.jsx";
 import GlideSync from "./routes/Clients/GlideSyncList.jsx";
 import LostCommissions from "./routes/Payment/LostCommissions.jsx";
 import HFSShared from "./routes/Payment/HFSShared.jsx";
+import DaybookPaymentSheet from "./routes/Payment/DaybookDisplay.jsx";
 
 export default function App() {
   return (
@@ -32,6 +33,10 @@ export default function App() {
         <Route path="/Payment/ClassifyClients" element={<ClassifyClients />} />
         <Route path="/Payment/LostCommissions" element={<LostCommissions />} />
         <Route path="/Payment/HFSShared" element={<HFSShared />} />
+        <Route
+          path="/Payment/DaybookFormat"
+          element={<DaybookPaymentSheet />}
+        />
         <Route
           path="/Payment/ClassifyInvoices"
           element={<ClassifyInvoices />}
