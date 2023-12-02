@@ -730,12 +730,7 @@ export default function PaymentSummary() {
                     </td>
                     <td
                       data-t="n"
-                      data-v={
-                        +(+totalInvoices["2022"]) +
-                        +lostClients["2022"] +
-                        +osaClients["2022"] +
-                        +ltdClients["2022"]
-                      }
+                      data-f="sum(C2:C6)"
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
                       {/*2022*/}
@@ -751,12 +746,7 @@ export default function PaymentSummary() {
                     </td>
                     <td
                       data-t="n"
-                      data-v={
-                        +(+totalInvoices["2023"]) +
-                        +lostClients["2023"] +
-                        +osaClients["2023"] +
-                        +ltdClients["2023"]
-                      }
+                      data-f="sum(e2:e6)"
                       className="w-1/12 px-2 py-2 text-gray-900 border-b border-gray-200"
                     >
                       {/*2023*/}

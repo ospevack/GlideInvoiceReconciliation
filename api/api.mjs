@@ -253,7 +253,52 @@ app.get("/payment/all", async (req, res, next) => {
   connection.query(
     //"select * from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
     //"select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner) partner,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id",
-    "select daybook.id daybook_id,Advanced_fee,Fees,adjustment,cancelled,client,comments,date,disb,number,recharge,sheet,type,writeOnOff,xeroClientId,xeroCreditNoteId,xeroInvoiceId,checkLine,adjusting_amount,adjusting_document,notes,c.id client_id,name,AccountNumber,glideId,XeroContactGroups,CalcGroup, COALESCE(i.GlideUserId, partner, '100010') partner, p.id adj_id,adj_amount clas_amount,adj_reason clas_reason,status clas_status, adhoc_amount, adhoc_reason, Description clas_description from daybook left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook' left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id left outer join salesrec.original_partners i on c.AccountNumber = i.code",
+    `select daybook.id                                                               daybook_id,
+    COALESCE(Advanced_fee, 0)                                             as Advanced_fee,
+    COALESCE(Fees, 0)                                                     as Fees,
+    COALESCE(adjustment, 0)                                               as adjustment,
+    cancelled,
+    COALESCE(Fees, 0) + COALESCE(adjustment, 0) + COALESCE(adjusting_amount, 0) + COALESCE(adj_amount, 0) +
+    COALESCE(adhoc_amount, 0)                                             as Total_Fee,
+    client,
+    comments,
+    date,
+    disb,
+    number,
+    COALESCE(recharge, 0)                                                 as recharge,
+    sheet,
+    type,
+    COALESCE(writeOnOff, 0)                                               as writeOnOff,
+    xeroClientId,
+    xeroCreditNoteId,
+    xeroInvoiceId,
+    checkLine,
+    COALESCE(adjusting_amount, 0)                                         as adjusting_amount,
+    adjusting_document,
+    notes,
+    c.id                                                                     client_id,
+    name,
+    AccountNumber,
+    glideId,
+    XeroContactGroups,
+    CalcGroup,
+    COALESCE(i.GlideUserId, partner, '100010')                            as partner,
+    p.id                                                                     adj_id,
+    COALESCE(adj_amount, 0)                                               as clas_amount,
+    adj_reason                                                               clas_reason,
+    status                                                                   clas_status,
+    COALESCE(adhoc_amount, 0)                                             as adhoc_amount,
+    adhoc_reason,
+    Description                                                              clas_description,
+    IF(status = 'adhoc',
+       COALESCE(Fees, 0) + COALESCE(adhoc_amount, 0) + COALESCE(adjustment, 0) + COALESCE(adjusting_amount, 0),
+       COALESCE(adhoc_amount, 0))                                         AS Total_Adhoc,
+    IF(status IN ('include', 'adhoc') OR CalcGroup = 'Lost', true, false) AS status_check
+from daybook
+      left outer join salesrec.reconciling_items ri on daybook.id = ri.invoice_id and adjusting_document = 'daybook'
+      left outer join salesrec.clients c on daybook.xeroClientId = c.XeroContactID
+      left outer join salesrec.payment_classifications p on daybook.id = p.invoice_id
+      left outer join salesrec.original_partners i on c.AccountNumber = i.code`,
     function (err, results, fields) {
       if (err) throw err;
       res.send(results);

@@ -38,9 +38,15 @@ export default function PaymentSubNav({ PageName }) {
     },
     {
       id: 6,
-      name: "Daybook Format Payment Sheet",
+      name: "Daybook Format",
       href: "/Payment/DaybookFormat",
       current: PageName === "DaybookFormat",
+    },
+    {
+      id: 7,
+      name: "Schedule Format",
+      href: "/Payment/ScheduleFormat",
+      current: PageName === "ScheduleFormat",
     },
   ];
   function classNames(...classes) {

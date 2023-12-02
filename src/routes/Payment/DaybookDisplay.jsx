@@ -6,6 +6,7 @@ import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
 import FilterCalcGroups from "./Filter-CalcGroups";
 import FilterPartners from "./Filter-Partners";
+import FilterSheets from "./Filter-Sheets";
 import { Switch } from "@headlessui/react";
 
 function classNames(...classes) {
@@ -22,10 +23,12 @@ export default function DaybookPaymentSheet() {
   const [firstDaybook, setFirstDaybook] = useState([]);
   const [secondDaybook, setSecondDaybook] = useState([]);
   const [selectedCalcGroups, setSelectedCalcGroups] = useState([]);
+  const [selectedSheets, setSelectedSheets] = useState([]);
   const sheetTable = useRef(null);
   const [selectedPartners, setSelectedPartners] = useState([]);
   const [includedOnly, setIncludedOnly] = useState(false);
   const [calcGroups, setCalcGroups] = useState([]);
+  const [sheets, setSheets] = useState([]);
 
   useEffect(() => {
     axios
@@ -48,6 +51,7 @@ export default function DaybookPaymentSheet() {
     setSecondDaybook(
       daybook.filter((item) => checkSheet(item.sheet) == "2023")
     );
+    setSheets([...new Set(daybook.map((item) => item.sheet))]);
   }, [daybook]);
 
   function checkSheet(sheet) {
@@ -66,15 +70,6 @@ export default function DaybookPaymentSheet() {
       sheet == "Oct-22"
       ? "2022"
       : "2023";
-  }
-  function clientLookup(client) {
-    //console.log(daybook.find((x) => x.xeroClientId === client).name);
-    return daybook.find((x) => x.xeroClientId === client).name;
-  }
-
-  function tagLookup(client) {
-    //console.log(daybook.find((x) => x.xeroClientId === client).name);
-    return daybook.find((x) => x.xeroClientId === client).CalcGroup;
   }
 
   function sumInvoices(invoices) {
@@ -98,8 +93,8 @@ export default function DaybookPaymentSheet() {
     }, 0);
   }
 
-  function removeSelected(group) {
-    setSelectedCalcGroups(selectedCalcGroups.filter((item) => item !== group));
+  function removeSelectedSheets(group) {
+    setSelectedSheets(selectedSheets.filter((item) => item !== group));
   }
 
   function removeSelectedPartner(group) {
@@ -145,18 +140,18 @@ export default function DaybookPaymentSheet() {
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters
                   </span>
-                  {/* <span className=" px-2">
+                  <span className=" px-2">
                     <span>
-                      <FilterPartners
-                        label={"Partner"}
-                        options={partners}
-                        selectedPartners={selectedPartners}
-                        setSelectedPartners={setSelectedPartners}
+                      <FilterSheets
+                        label={"Sheet"}
+                        options={sheets}
+                        selectedSheets={selectedSheets}
+                        setSelectedSheets={setSelectedSheets}
                       />
                     </span>
                     <span className="ml-auto flex items-center text-sm">
                       <span className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">
-                        <button onClick={() => setSelectedPartners([])}>
+                        <button onClick={() => setSelectedSheets([])}>
                           clear all
                         </button>
                       </span>
@@ -164,14 +159,15 @@ export default function DaybookPaymentSheet() {
                         <button
                           className="flex rounded bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100"
                           onClick={() =>
-                            setSelectedPartners(partners.map((p) => p.ID))
+                            setSelectedSheets(sheets.map((p) => p))
                           }
                         >
                           select all
                         </button>
                       </span>
                     </span>
-                  </span>
+                  </span>{" "}
+                  {/*
                   <span className=" px-2">
                     <span>
                       <FilterCalcGroups
@@ -233,16 +229,16 @@ export default function DaybookPaymentSheet() {
                   <span className="px-2 flex-none text-xl font-medium text-gray-900">
                     Filters Applied
                   </span>
-                  {/* {selectedCalcGroups.length > 1 && (
+                  {selectedSheets.length > 1 && (
                     <span className="flex flex-wrap">
                       <span className="flex text-xs p-2">Sheets:</span>
-                      {selectedCalcGroups.map((group) => (
+                      {selectedSheets.map((group) => (
                         <span className="inline-flex items-center gap-x-0.5 rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
                           {group}
                           <button
                             type="button"
                             className="group relative -mr-1 h-3.5 w-3.5 rounded-sm hover:bg-gray-500/20"
-                            onClick={() => removeSelected(group)}
+                            onClick={() => removeSelectedSheets(group)}
                           >
                             <span className="sr-only">Remove</span>
                             <svg
@@ -257,6 +253,7 @@ export default function DaybookPaymentSheet() {
                       ))}
                     </span>
                   )}
+                  {/*
                   {selectedPartners.length > 1 && (
                     <span className="flex flex-wrap">
                       <span className="flex text-xs p-2">Partners:</span>
@@ -295,181 +292,6 @@ export default function DaybookPaymentSheet() {
                       colSpan={17}
                       className="bg-indigo-600 text-white text-xl"
                     >
-                      2021-2022 Daybook items
-                    </td>
-                  </tr>
-                  <tr className="text-semibold text-base border-b-2 border-gray-400">
-                    <td>Date</td>
-                    <td>Type</td>
-                    <td>Inv No</td>
-                    <td>Client Code</td>
-                    <td>Client</td>
-                    <td className="text-right">Time</td>
-                    <td className="text-right">Expenses</td>
-                    <td className="text-right">Net</td>
-                    <td></td>
-                    <td className="text-right">Transfer and referrals</td>
-                    <td className="text-right">New clients</td>
-                    <td className="text-right">Disbursements</td>
-                    <td className="text-right">Adhoc</td>
-                    <td className="text-right">Done twice</td>
-                    <td className="text-right">not paid over 9 months</td>
-                    <td className="text-right">Gone</td>
-                    <td className="text-right">OSA</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* firstDaybook */}
-
-                  {firstDaybook
-                    .filter((x) => !checkExcludeStatus(x.clas_status))
-                    .map((item) => (
-                      <tr>
-                        <td>
-                          {new Date(item.date).toLocaleDateString("en-GB")}
-                        </td>
-                        <td>{item.type}</td>
-                        <td>{item.number}</td>
-                        <td>{item.AccountNumber}</td>
-                        <td>{item.name}</td>
-                        <td
-                          data-t="n"
-                          data-z="#,##0.00 ;(#,##0.00);"
-                          data-v={
-                            +item.Fees +
-                            +item.adjusting_amount +
-                            +item.adjustment
-                          }
-                          className="text-right"
-                        >
-                          {formatCurrency.format(
-                            +item.Fees +
-                              +item.adjusting_amount +
-                              +item.adjustment
-                          )}
-                        </td>
-                        <td
-                          data-t="n"
-                          data-v={+item.disb}
-                          data-x="#,##0.00 ;(#,##0.00);"
-                          className="text-right"
-                        >
-                          {formatCurrency.format(+item.disb)}
-                        </td>
-                        <td
-                          data-t="n"
-                          data-v={
-                            +item.Fees +
-                            +item.adjusting_amount +
-                            +item.adjustment +
-                            +item.disb
-                          }
-                          data-z="#,##0.00 ;(#,##0.00);"
-                          className="text-right"
-                        >
-                          {formatCurrency.format(
-                            +item.Fees +
-                              +item.adjustment +
-                              +item.adjustment +
-                              +item.disb
-                          )}
-                        </td>
-                        <td></td>
-                        <td
-                          className="text-right"
-                          data-t="n"
-                          data-z="#,##0.00 ;(#,##0.00);"
-                          data-v={
-                            item.clas_status == "include" &&
-                            +item.Fees +
-                              +item.adjusting_amount +
-                              +item.adjustment +
-                              +item.disb
-                          }
-                        >
-                          {/*Transfer and Referral*/}
-                          {item.clas_status == "include" &&
-                            formatCurrency.format(
-                              +item.Fees +
-                                +item.adjusting_amount +
-                                +item.adjustment +
-                                +item.disb
-                            )}
-                        </td>
-                        <td
-                          className="text-right"
-                          data-t="n"
-                          data-z="#,##0.00 ;(#,##0.00);"
-                          data-v={
-                            item.CalcGroup == "New-Ltd" &&
-                            +item.Fees +
-                              +item.adjusting_amount +
-                              +item.adjustment +
-                              +item.disb
-                          }
-                        >
-                          {/*New clients*/}
-                          {item.CalcGroup == "New-Ltd" &&
-                            formatCurrency.format(
-                              +item.Fees +
-                                +item.adjusting_amount +
-                                +item.adjustment +
-                                +item.disb
-                            )}
-                        </td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                      </tr>
-                    ))}
-                  <tr className="text-semibold text-base border-t-2 border-gray-400">
-                    <td colSpan={7}>2022 total</td>
-                    <td className="text-right">
-                      {formatCurrency.format(
-                        sumInvoices(
-                          firstDaybook.filter(
-                            (x) => !checkExcludeStatus(x.clas_status)
-                          )
-                        )
-                      )}
-                    </td>
-                    <td></td>
-                    <td className="text-right">
-                      {/*Transfer and Referral*/}
-                      {formatCurrency.format(
-                        sumInvoices(
-                          firstDaybook.filter(
-                            (x) =>
-                              x.clas_status != null &&
-                              x.clas_status == "include"
-                          )
-                        )
-                      )}
-                    </td>
-                    <td className="text-right">
-                      {/*New Clients*/}
-                      {formatCurrency.format(
-                        +sumInvoices(
-                          firstDaybook.filter(
-                            (x) =>
-                              x.clas_status != null && x.CalcGroup == "New-Ltd"
-                          )
-                        )
-                      )}
-                    </td>
-                    <td colSpan={6}></td>
-                  </tr>
-                </tbody>
-
-                <thead>
-                  <tr>
-                    <td
-                      colSpan={17}
-                      className="bg-indigo-600 text-white text-xl"
-                    >
                       2022-2023 Daybook items
                     </td>
                   </tr>
@@ -496,138 +318,163 @@ export default function DaybookPaymentSheet() {
                 <tbody>
                   {/* secondDaybook */}
 
-                  {secondDaybook.map((item) => (
-                    <tr>
-                      <td>{new Date(item.date).toLocaleDateString("en-GB")}</td>
-                      <td>{item.type}</td>
-                      <td>{item.number}</td>
-                      <td>{item.AccountNumber}</td>
-                      <td>{item.name}</td>
-                      <td
-                        data-t="n"
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        data-v={
-                          +item.Fees + +item.adjusting_amount + +item.adjustment
-                        }
-                        className="text-right"
-                      >
-                        {formatCurrency.format(
-                          +item.Fees + +item.adjusting_amount + +item.adjustment
-                        )}
-                      </td>
-                      <td
-                        data-t="n"
-                        data-v={+item.disb}
-                        data-x="#,##0.00 ;(#,##0.00);"
-                        className="text-right"
-                      >
-                        {formatCurrency.format(+item.disb)}
-                      </td>
-                      <td
-                        data-t="n"
-                        data-v={
-                          +item.Fees +
-                          +item.adjusting_amount +
-                          +item.adjusting_amount +
-                          +item.disb
-                        }
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        className="text-right"
-                      >
-                        {formatCurrency.format(
-                          +item.Fees +
+                  {secondDaybook
+                    .filter(
+                      (x) =>
+                        selectedSheets.includes(x.sheet) && x.status_check == 1
+                    )
+                    .map((item) => (
+                      <tr>
+                        <td>
+                          {new Date(item.date).toLocaleDateString("en-GB")}
+                        </td>
+                        <td>{item.type}</td>
+                        <td>{item.number}</td>
+                        <td>{item.AccountNumber}</td>
+                        <td>{item.name}</td>
+                        <td
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          data-v={+item.Total_Fee}
+                          className="text-right"
+                        >
+                          {formatCurrency.format(+item.Total_Fee)}
+                        </td>
+                        <td
+                          data-t="n"
+                          data-v={+item.disb}
+                          data-x="#,##0.00 ;(#,##0.00);"
+                          className="text-right"
+                        >
+                          {formatCurrency.format(+item.disb)}
+                        </td>
+                        <td
+                          data-t="n"
+                          data-v={
+                            +item.Fees +
                             +item.adjusting_amount +
                             +item.adjusting_amount +
                             +item.disb
-                        )}
-                      </td>
-                      <td></td>
-                      <td
-                        className="text-right"
-                        data-t="n"
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        data-v={
-                          item.clas_status == "include" &&
-                          +item.Fees +
-                            +item.adjusting_amount +
-                            +item.adjusting_amount +
-                            +item.disb
-                        }
-                      >
-                        {/*Transfer and Referral*/}
-                        {item.clas_status == "include" &&
-                          formatCurrency.format(
+                          }
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          className="text-right"
+                        >
+                          {formatCurrency.format(
                             +item.Fees +
                               +item.adjusting_amount +
                               +item.adjusting_amount +
                               +item.disb
                           )}
-                      </td>
-                      <td
-                        className="text-right"
-                        data-t="n"
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        data-v={
-                          item.CalcGroup == "New-Ltd" &&
-                          +item.Fees +
-                            +item.adjusting_amount +
-                            +item.adjusting_amount +
-                            +item.disb
-                        }
-                      >
-                        {/*New clients*/}
-                        {item.CalcGroup == "New-Ltd" &&
-                          formatCurrency.format(
+                        </td>
+                        <td data-v={item.sheet} className="text-right">
+                          {item.sheet}
+                        </td>
+                        <td
+                          className="text-right"
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          data-v={
+                            item.clas_status == "include" &&
                             +item.Fees +
                               +item.adjusting_amount +
                               +item.adjusting_amount +
                               +item.disb
-                          )}
-                      </td>
-                      <td
-                        className="text-right"
-                        data-t="n"
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        data-v={
-                          item.clas_status == "include" &&
-                          +item.clas_amount - +item.adhoc_amount
-                        }
-                      >
-                        {/*Dibursements*/}
-                        {item.clas_status == "include" &&
-                          formatCurrency.format(
-                            +item.clas_amount - +item.adhoc_amount
-                          )}
-                      </td>
-                      <td
-                        className="text-right"
-                        data-t="n"
-                        data-z="#,##0.00 ;(#,##0.00);"
-                        data-v={
-                          item.clas_status == "include" &&
-                          +item.clas_amount - +item.adhoc_amount
-                        }
-                      >
-                        {/*Adhoc*/}
-                        {+formatCurrency.format(
-                          (item.clas_status == "include" &&
-                            +item.adhoc_amount) +
-                            +(
-                              item.clas_status == "adhoc" &&
+                          }
+                        >
+                          {/*Transfer and Referral*/}
+                          {item.clas_status == "include" &&
+                            formatCurrency.format(
                               +item.Fees +
                                 +item.adjusting_amount +
-                                +item.adjusting_amount
-                            )
-                        ) ?? null}
-                      </td>
-                      <td>{/*Done Twice*/}</td>
-                      <td>{/*9 months*/}</td>
-                      <td>{/*Gone*/}</td>
-                      <td>{/*OSA*/}</td>
-                    </tr>
-                  ))}
+                                +item.adjusting_amount +
+                                +item.disb
+                            )}
+                        </td>
+                        <td
+                          className="text-right"
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          data-v={
+                            item.CalcGroup == "New-Ltd" &&
+                            +item.Fees +
+                              +item.adjusting_amount +
+                              +item.adjusting_amount +
+                              +item.disb
+                          }
+                        >
+                          {/*New clients*/}
+                          {item.CalcGroup == "New-Ltd" &&
+                            formatCurrency.format(
+                              +item.Fees +
+                                +item.adjusting_amount +
+                                +item.adjusting_amount +
+                                +item.disb
+                            )}
+                        </td>
+                        <td
+                          className="text-right"
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          data-v={
+                            item.clas_status == "include" &&
+                            +item.clas_amount - +item.adhoc_amount
+                          }
+                        >
+                          {/*Dibursements*/}
+                          {item.clas_status == "include" &&
+                            formatCurrency.format(
+                              +item.clas_amount - +item.adhoc_amount
+                            )}
+                        </td>
+                        <td
+                          className="text-right"
+                          data-t="n"
+                          data-z="#,##0.00 ;(#,##0.00);"
+                          data-v={
+                            item.clas_status == "include" &&
+                            +item.clas_amount - +item.adhoc_amount
+                          }
+                        >
+                          {/*Adhoc*/}
+                          {+formatCurrency.format(
+                            (item.clas_status == "include" &&
+                              +item.adhoc_amount) +
+                              +(
+                                item.clas_status == "adhoc" &&
+                                +item.Fees +
+                                  +item.adjusting_amount +
+                                  +item.adjusting_amount
+                              )
+                          ) ?? null}
+                        </td>
+                        <td>{/*Done Twice*/}</td>
+                        <td>{/*9 months*/}</td>
+                        <td>{/*Gone*/}</td>
+                        <td>{/*OSA*/}</td>
+                      </tr>
+                    ))}
                   <tr className="text-semibold text-base border-t-2 border-gray-400">
-                    <td colSpan={7}>2023 total</td>
+                    <td colSpan={5}>2023 total</td>
+                    <td className="text-right">
+                      {formatCurrency.format(
+                        secondDaybook
+                          .filter(
+                            (x) =>
+                              selectedSheets.includes(x.sheet) &&
+                              x.status_check == 1
+                          )
+                          .reduce((total, invoice) => {
+                            return +total + +invoice.Total_Fee;
+                          }, 0)
+                      )}
+                    </td>
+                    <td className="text-right">
+                      {formatCurrency.format(
+                        secondDaybook.reduce((total, invoice) => {
+                          return ++total + +invoice.disb;
+                        }, 0)
+                      )}
+                    </td>
                     <td className="text-right">
                       {formatCurrency.format(sumInvoices(secondDaybook))}
                     </td>
