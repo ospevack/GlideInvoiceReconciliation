@@ -1,4 +1,4 @@
-import Navbar from "../../../components/navbar";
+import Navbar from "../../../components/Navbar";
 import CompListBox from "./Component-List";
 import CompMatch from "./Component-Matched";
 import InvRow from "./Component-InvRow";

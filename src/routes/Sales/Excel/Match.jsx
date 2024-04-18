@@ -1,4 +1,4 @@
-import Navbar from "../../../components/navbar";
+import Navbar from "../../../components/Navbar";
 import CompListBox from "./Component-List";
 import { Fragment, useState, useEffect } from "react";
 import axios from "axios";

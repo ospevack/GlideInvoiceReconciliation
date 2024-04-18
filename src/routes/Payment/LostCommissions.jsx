@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { utils, writeFileXLSX } from "xlsx";
 import PaymentSubNav from "../../components/PaymentSubNav";
-import Navbar from "../../components/navbar";
+import Navbar from "../../components/Navbar";
 import { CheckCircleIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import axios from "axios";
 

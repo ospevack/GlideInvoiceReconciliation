@@ -1,4 +1,4 @@
-import Navbar from "../../components/navbar";
+import Navbar from "../../components/Navbar";
 import { CheckCircleIcon, TableCellsIcon } from "@heroicons/react/20/solid";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
